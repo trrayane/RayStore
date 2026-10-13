@@ -622,6 +622,12 @@ table.t{width:100%;border-collapse:collapse;min-width:760px}
 .am[hidden]{display:none}
 .am-box{width:min(560px,100%);max-height:88vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r28);box-shadow:var(--e4);padding:26px;animation:pop var(--move) var(--spring) both}
 .am-h{font-family:var(--disp);font-weight:800;font-size:20px;line-height:1.2;margin-bottom:12px}
+.am-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.am-top .am-h{margin-bottom:0}
+.am-hero{width:96px;height:144px;flex:none;border-radius:var(--r16);overflow:hidden;border:1px solid var(--line);background:var(--hi)}
+.am-hero .cv{width:100%;height:100%;aspect-ratio:auto;border-radius:0}
+.am-hero img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:520px){.am-hero{width:74px;height:111px}}
 .am-p{color:var(--muted);margin-bottom:20px}
 .am-act{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
 .dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:0 0 16px}
@@ -1768,7 +1774,7 @@ function viewCart(){
 
 /* ---- Commande ---- */
 function viewCheckout(ok){
-  if(ok) return '<section class="page pad w-lg"><div class="panel ok-box"><span class="ok-ic"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span><h2>'+t('ok_t')+'</h2><p>'+t('ok_d')+'</p><span class="ok-ref">'+t('m_ref')+' : '+esc(ok)+'</span><div class="ok-acts"><a class="btn" href="#/">'+t('ok_home')+'</a><a class="btn ghost" href="#/catalogue">'+t('browse_cat')+'</a></div></div></section>';
+  if(ok) return '<section class="page pad w-lg"><div class="panel ok-box"><span class="ok-ic"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></span><h2>'+t('ok_t')+'</h2><p>'+t('ok_d')+'</p><div class="ok-acts"><a class="btn" href="#/">'+t('ok_home')+'</a><a class="btn ghost" href="#/catalogue">'+t('browse_cat')+'</a></div></div></section>';
   if(!cartCount()) return viewCart();
   const lines=Object.keys(cart).map(id=>{const it=byId(id);return '<div class="trow" style="border-top:0;padding:6px 0;margin:0"><span>'+esc(itemTitle(it))+' \u00d7'+cart[id]+'</span><b>'+fmt(it.price*cart[id])+'</b></div>';}).join('');
   return '<section class="page pad w-lg"><h1>'+t('co_title')+'</h1><hr class="rule"><div class="two"><form class="panel" id="order" novalidate style="padding:26px">'
@@ -1963,9 +1969,10 @@ function admOrders(){
    +(list.length?ordTable(list,true):'<div class="empty"><h2>Aucune commande</h2><p>Les commandes envoyées depuis la boutique apparaissent ici.</p></div>');
 }
 function ordModal(o){
-  amOpen('<h2 class="am-h">Commande '+esc(o.id)+'</h2><span class="st '+esc(o.status)+'">'+esc(STAT[o.status]||o.status)+'</span>'
+  const hero=(()=>{ const l=o.lines[0]; if(!l) return ''; const it=byId(l.id); const th=it?itemCover(it):(l.img||l.style?cover({title:l.short||l.title,vol:l.img?null:l.vol,style:l.style,a:l.a,b:l.b,author:l.author,img:l.img}):''); return th?'<span class="am-hero">'+th+'</span>':''; })();
+  amOpen('<div class="am-top"><div><h2 class="am-h">Commande '+esc(o.id)+'</h2><span class="st '+esc(o.status)+'">'+esc(STAT[o.status]||o.status)+'</span></div>'+hero+'</div>'
    +'<dl class="dl" style="margin-top:16px"><dt>Date</dt><dd>'+esc(fdate(o.date))+'</dd><dt>Client</dt><dd>'+esc(o.name)+'</dd><dt>Téléphone</dt><dd>'+esc(o.phone)+'</dd><dt>Wilaya</dt><dd>'+esc(o.wil)+'</dd><dt>Adresse</dt><dd>'+esc(o.addr||'—')+'</dd><dt>Livraison</dt><dd>'+esc(o.ship==='home'?'À domicile':'Point relais')+' ('+fmtA(o.shipCost)+')</dd></dl>'
-   +'<div class="am-lines">'+o.lines.map(l=>{ const it=byId(l.id); const thumb=it?itemCover(it):(l.img||l.style?cover({title:l.short||l.title,vol:l.img?null:l.vol,style:l.style,a:l.a,b:l.b,author:l.author,img:l.img}):''); return '<div><span class="al-item">'+(thumb?'<span class="al-thumb">'+thumb+'</span>':'')+'<span class="al-txt"><span>'+esc(l.title)+'</span><small class="mut">\u00d7'+l.qty+'</small></span></span><b>'+fmtA(l.price*l.qty)+'</b></div>'; }).join('')+'<div><span>Livraison</span><b>'+fmtA(o.shipCost)+'</b></div><div><b>Total</b><b>'+fmtA(o.total)+'</b></div></div>'
+   +'<div class="am-lines">'+o.lines.map(l=>'<div><span>'+esc(l.title)+' \u00d7'+l.qty+'</span><b>'+fmtA(l.price*l.qty)+'</b></div>').join('')+'<div><span>Livraison</span><b>'+fmtA(o.shipCost)+'</b></div><div><b>Total</b><b>'+fmtA(o.total)+'</b></div></div>'
    +'<div class="am-act"><a class="btn soft sm" href="https://wa.me/'+intl(o.phone)+'?text='+encodeURIComponent('Bonjour '+o.name+', concernant votre commande '+o.id)+'" target="_blank" rel="noopener">Écrire sur WhatsApp</a><button class="btn sm" type="button" data-a="am-x">Fermer</button></div>');
 }
 function ordersCSV(){
