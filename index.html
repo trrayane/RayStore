@@ -624,7 +624,9 @@ table.t{width:100%;border-collapse:collapse;min-width:760px}
 .am-h{font-family:var(--disp);font-weight:800;font-size:20px;line-height:1.2;margin-bottom:12px}
 .am-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .am-top .am-h{margin-bottom:0}
-.am-hero{width:96px;height:144px;flex:none;border-radius:var(--r16);overflow:hidden;border:1px solid var(--line);background:var(--hi)}
+.am-info{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.am-info .dl{flex:1 1 auto;min-width:0;margin-top:16px}
+.am-hero{width:110px;height:165px;flex:none;margin-top:16px;border-radius:var(--r16);overflow:hidden;border:1px solid var(--line);background:var(--hi)}
 .am-hero .cv{width:100%;height:100%;aspect-ratio:auto;border-radius:0}
 .am-hero img{width:100%;height:100%;object-fit:cover;display:block}
 @media (max-width:520px){.am-hero{width:74px;height:111px}}
@@ -1970,8 +1972,8 @@ function admOrders(){
 }
 function ordModal(o){
   const hero=(()=>{ const l=o.lines[0]; if(!l) return ''; const it=byId(l.id); const th=it?itemCover(it):(l.img||l.style?cover({title:l.short||l.title,vol:l.img?null:l.vol,style:l.style,a:l.a,b:l.b,author:l.author,img:l.img}):''); return th?'<span class="am-hero">'+th+'</span>':''; })();
-  amOpen('<div class="am-top"><div><h2 class="am-h">Commande '+esc(o.id)+'</h2><span class="st '+esc(o.status)+'">'+esc(STAT[o.status]||o.status)+'</span></div>'+hero+'</div>'
-   +'<dl class="dl" style="margin-top:16px"><dt>Date</dt><dd>'+esc(fdate(o.date))+'</dd><dt>Client</dt><dd>'+esc(o.name)+'</dd><dt>Téléphone</dt><dd>'+esc(o.phone)+'</dd><dt>Wilaya</dt><dd>'+esc(o.wil)+'</dd><dt>Adresse</dt><dd>'+esc(o.addr||'—')+'</dd><dt>Livraison</dt><dd>'+esc(o.ship==='home'?'À domicile':'Point relais')+' ('+fmtA(o.shipCost)+')</dd></dl>'
+  amOpen('<h2 class="am-h">Commande '+esc(o.id)+'</h2><span class="st '+esc(o.status)+'">'+esc(STAT[o.status]||o.status)+'</span>'
+   +'<div class="am-info"><dl class="dl" style="margin-top:16px"><dt>Date</dt><dd>'+esc(fdate(o.date))+'</dd><dt>Client</dt><dd>'+esc(o.name)+'</dd><dt>Téléphone</dt><dd>'+esc(o.phone)+'</dd><dt>Wilaya</dt><dd>'+esc(o.wil)+'</dd><dt>Adresse</dt><dd>'+esc(o.addr||'—')+'</dd><dt>Livraison</dt><dd>'+esc(o.ship==='home'?'À domicile':'Point relais')+' ('+fmtA(o.shipCost)+')</dd></dl>'+hero+'</div>'
    +'<div class="am-lines">'+o.lines.map(l=>'<div><span>'+esc(l.title)+' \u00d7'+l.qty+'</span><b>'+fmtA(l.price*l.qty)+'</b></div>').join('')+'<div><span>Livraison</span><b>'+fmtA(o.shipCost)+'</b></div><div><b>Total</b><b>'+fmtA(o.total)+'</b></div></div>'
    +'<div class="am-act"><a class="btn soft sm" href="https://wa.me/'+intl(o.phone)+'?text='+encodeURIComponent('Bonjour '+o.name+', concernant votre commande '+o.id)+'" target="_blank" rel="noopener">Écrire sur WhatsApp</a><button class="btn sm" type="button" data-a="am-x">Fermer</button></div>');
 }
