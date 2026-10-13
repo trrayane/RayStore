@@ -275,6 +275,8 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .foot-b{border-top:1px solid var(--line);padding-top:18px;padding-bottom:26px;color:var(--muted);font-family:var(--mono);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .foot-b a{color:var(--muted);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;min-height:44px;padding:0 4px;transition:color var(--snap)}
 .foot-b a:hover{color:var(--ink)}
+.foot-b .adm-dot{color:transparent;text-decoration:none;font-size:14px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:50%}
+.foot-b .adm-dot:hover,.foot-b .adm-dot:focus-visible{color:var(--muted)}
 @media (max-width:1023px){.foot-in{grid-template-columns:1fr 1fr}}
 @media (max-width:639px){.foot-in{grid-template-columns:1fr}}
 
@@ -568,7 +570,7 @@ fieldset{border:0;margin:0 0 16px;padding:0}
 .tool .sbar{flex:1;min-width:220px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 .tw{position:relative;overflow-x:auto;border:1px solid var(--line);border-radius:var(--r24);background:var(--surface);box-shadow:var(--e1)}
-table.t{width:100%;border-collapse:collapse;min-width:760px}
+table.t{width:100%;border-collapse:collapse;min-width:860px}
 .t th{text-align:start;font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
 .t td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 .t tr:last-child td{border-bottom:0}
@@ -1208,7 +1210,7 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
   .tw.cards{overflow:visible;border:0;border-radius:0;background:transparent;box-shadow:none}
   .cards .t,.cards .t tbody{display:block;width:100%;min-width:0}
   .cards .t thead{display:none}
-  .cards .t tr{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 44px;grid-template-areas:"th name name star" "th type lang lang" "th price vols vols" "act act act act";gap:10px 12px;align-items:center;padding:14px;margin-bottom:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r24);box-shadow:var(--e1)}
+  .cards .t tr{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) minmax(44px,auto);grid-template-areas:"th name name star" "th type lang lang" "th price vols stock" "act act act act";gap:10px 12px;align-items:center;padding:14px;margin-bottom:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r24);box-shadow:var(--e1)}
   .cards .t td{display:block;min-width:0;padding:0;border:0;background:none!important}
   .cards .t td:nth-child(1){grid-area:th;align-self:start}
   .cards .t td.pn{grid-area:name;overflow-wrap:anywhere}
@@ -1216,6 +1218,7 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
   .cards .t td:nth-child(4){grid-area:lang}
   .cards .t td:nth-child(5){grid-area:price}
   .cards .t td:nth-child(6){grid-area:vols}
+  .cards .t td:nth-child(7){grid-area:stock}
   .cards .t td.pf{grid-area:star;justify-self:end;align-self:start}
   .cards .t td.pa{grid-area:act}
   .cards .t td[data-l]::before{content:attr(data-l);display:block;margin-bottom:2px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--muted)}
@@ -1252,6 +1255,21 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
   .hdr .logo img{width:32px;height:32px}
   .hdr .tools{gap:4px}
   .hdr .rb{width:36px;height:36px}
+}
+
+/* =====================================================================
+   RESPONSIVITÉ — derniers correctifs (modal commande, pied de page)
+   ===================================================================== */
+@media (max-width:520px){
+  .am-info{gap:12px}
+  .am-info .dl{grid-template-columns:auto minmax(0,1fr);gap:5px 12px;font-size:13px}
+  .am-info .dl dt{font-size:13px}
+  .am-hero{width:74px;height:111px;margin-top:14px}
+  .ok-box .ok-acts{width:100%}
+  .ok-box .ok-acts .btn{flex:1 1 auto;justify-content:center}
+}
+@media (max-width:639px){
+  .foot-b .adm-dot{margin-inline-start:auto}
 }
 </style>
 </head>
@@ -1821,7 +1839,7 @@ function renderFoot(){
    +'<div><h4>'+t('f_shop')+'</h4><ul><li><a href="#/catalogue">'+t('f_all')+'</a></li><li><a href="#/catalogue?genre=shonen">Shonen</a></li><li><a href="#/catalogue?genre=seinen">Seinen</a></li><li><a href="#/catalogue?type=goods">'+t('ty_goods')+'</a></li><li><a href="#/catalogue?promo=1">'+t('f_promos')+'</a></li></ul></div>'
    +'<div><h4>'+t('f_help')+'</h4><ul><li><a href="#/shipping">'+t('f_ship')+'</a></li><li><a href="https://wa.me/'+STORE.whatsapp+'" target="_blank" rel="noopener">'+t('f_contact')+'</a></li></ul></div>'
    +'<div><h4>'+t('f_join')+'</h4><div class="soc"><a class="rb" href="'+STORE.instagram+'" target="_blank" rel="noopener" aria-label="Instagram">'+IC.insta+'</a><a class="rb" href="https://wa.me/'+STORE.whatsapp+'" target="_blank" rel="noopener" aria-label="WhatsApp">'+IC.wa+'</a></div></div></div>'
-   +'<div class="foot-b pad w-xl"><span>\u00a9 '+new Date().getFullYear()+' '+esc(STORE.name)+'. '+t('f_copy')+'</span></div>';
+   +'<div class="foot-b pad w-xl"><span>\u00a9 '+new Date().getFullYear()+' '+esc(STORE.name)+'. '+t('f_copy')+'</span><a class="adm-dot" href="#/admin" aria-label="Administration">\u2022</a></div>';
 }
 
 /* ================= ADMIN ================= */
