@@ -274,9 +274,9 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .foot .soc{display:flex;gap:12px;flex-wrap:wrap}
 .foot-b{border-top:1px solid var(--line);padding-top:18px;padding-bottom:26px;color:var(--muted);font-family:var(--mono);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .foot-b a{color:var(--muted);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;min-height:44px;padding:0 4px;transition:color var(--snap)}
-.foot-b a:hover{color:var(--ink)}
-.foot-b .adm-dot{color:transparent;text-decoration:none;font-size:14px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:50%}
-.foot-b .adm-dot:hover,.foot-b .adm-dot:focus-visible{color:var(--muted)}
+.foot-b a:not(.copy-lnk):hover{color:var(--ink)}
+.foot-b .copy-lnk{color:inherit;text-decoration:none;font:inherit;min-height:44px;display:inline-flex;align-items:center;cursor:default;transition:opacity var(--snap)}
+.foot-b .copy-lnk:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
 @media (max-width:1023px){.foot-in{grid-template-columns:1fr 1fr}}
 @media (max-width:639px){.foot-in{grid-template-columns:1fr}}
 
@@ -954,8 +954,8 @@ img,video,svg{max-width:100%}
   /* barre du bas */
   .foot-b{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;
           gap:2px 12px;padding-top:14px;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));font-size:11px}
-  .foot-b span{flex:1 1 auto;min-width:0}
-  .foot-b a{flex:none;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:999px;font-size:11px}
+  .foot-b span,.foot-b>.copy-lnk{flex:1 1 auto;min-width:0}
+  .foot-b a:not(.copy-lnk){flex:none;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:999px;font-size:11px}
 }
 @media (max-width:359px){
   .foot-in{grid-template-columns:minmax(0,1fr)}
@@ -1267,9 +1267,6 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
   .am-hero{width:74px;height:111px;margin-top:14px}
   .ok-box .ok-acts{width:100%}
   .ok-box .ok-acts .btn{flex:1 1 auto;justify-content:center}
-}
-@media (max-width:639px){
-  .foot-b .adm-dot{margin-inline-start:auto}
 }
 </style>
 </head>
@@ -1839,7 +1836,7 @@ function renderFoot(){
    +'<div><h4>'+t('f_shop')+'</h4><ul><li><a href="#/catalogue">'+t('f_all')+'</a></li><li><a href="#/catalogue?genre=shonen">Shonen</a></li><li><a href="#/catalogue?genre=seinen">Seinen</a></li><li><a href="#/catalogue?type=goods">'+t('ty_goods')+'</a></li><li><a href="#/catalogue?promo=1">'+t('f_promos')+'</a></li></ul></div>'
    +'<div><h4>'+t('f_help')+'</h4><ul><li><a href="#/shipping">'+t('f_ship')+'</a></li><li><a href="https://wa.me/'+STORE.whatsapp+'" target="_blank" rel="noopener">'+t('f_contact')+'</a></li></ul></div>'
    +'<div><h4>'+t('f_join')+'</h4><div class="soc"><a class="rb" href="'+STORE.instagram+'" target="_blank" rel="noopener" aria-label="Instagram">'+IC.insta+'</a><a class="rb" href="https://wa.me/'+STORE.whatsapp+'" target="_blank" rel="noopener" aria-label="WhatsApp">'+IC.wa+'</a></div></div></div>'
-   +'<div class="foot-b pad w-xl"><span>\u00a9 '+new Date().getFullYear()+' '+esc(STORE.name)+'. '+t('f_copy')+'</span><a class="adm-dot" href="#/admin" aria-label="Administration">\u2022</a></div>';
+   +'<div class="foot-b pad w-xl"><a class="copy-lnk" href="#/admin">\u00a9 '+new Date().getFullYear()+' '+esc(STORE.name)+'. '+t('f_copy')+'</a></div>';
 }
 
 /* ================= ADMIN ================= */
