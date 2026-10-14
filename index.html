@@ -1318,13 +1318,12 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
 .crumbs a:hover{color:var(--pri);text-decoration:underline}
 .crumbs i{font-style:normal;opacity:.45}
 .crumbs span{color:var(--ink);font-weight:700}
-.pd-tags{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
 .tag{display:inline-flex;align-items:center;padding:6px 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--hi);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow-wrap:anywhere}
-.tag.acc{background:var(--pri);border-color:var(--pri);color:#fff}
 .pd .acts{flex-wrap:wrap;align-items:center}
 .pd .acts .btn.atc{flex:1 1 auto;min-width:180px}
-.stock-max{width:100%;margin:10px 0 0;color:var(--err);font-size:13.5px;font-weight:700}
-.stock-max[hidden]{display:none}
+/* Les rangées produits restent gauche→droite même en arabe */
+html[dir="rtl"] .row{direction:ltr}
+html[dir="rtl"] .row>*{direction:rtl}
 .pd-tabs{display:flex;gap:24px;border-bottom:1.5px solid var(--line);margin-top:6px}
 .pd-tab{appearance:none;background:none;border:0;border-bottom:3px solid transparent;padding:12px 2px;margin-bottom:-1.5px;font-family:var(--disp);font-weight:800;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:color var(--snap),border-color var(--snap)}
 .pd-tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--pri)}
@@ -1521,7 +1520,7 @@ fr:{
   sm_ph:'Chercher un manga, un goodie…', sm_nav:'↑ ↓ pour naviguer', sm_open:'Entrée pour ouvrir', sm_none:'Aucun résultat pour « {q} ».', sm_close:'Fermer',
   toast_cart:'Ajouté au panier', toast_fav:'Ajouté aux favoris', toast_unfav:'Retiré des favoris',
   p_add:'Ajouter au panier', p_added:'Ajouté', p_fav:'Favori', p_more:'Dans la même série', p_lang:'Langue', p_type:'Type', p_genre:'Genre', p_back:'Catalogue',
-  cr_home:'Accueil', cr_nav:'Fil d\u2019Ariane', p_syn:'Synopsis', p_sheet:'Fiche technique', p_nod:'Pas encore de description pour ce volume.', p_max:'C\u2019est le maximum disponible.', p_qty:'Quantité', p_author:'Auteur',
+  cr_home:'Accueil', cr_nav:'Fil d\u2019Ariane', p_syn:'Synopsis', p_sheet:'Fiche technique', p_nod:'Pas encore de description pour ce volume.', p_qty:'Quantité', p_author:'Auteur',
   sh_title:'Livraison & paiement', sh_rates:'Tarifs estimés',
   s1t:'Commande', s1d:'Ajoute tes volumes au panier et envoie ta commande.', s2t:'Confirmation', s2d:'On t\u2019écrit sur WhatsApp pour vérifier la commande avec toi.', s3t:'Réception', s3d:'Tu paies quand le colis arrive chez toi.'
 },
@@ -1559,7 +1558,7 @@ ar:{
   sm_ph:'ابحث عن مانجا أو سلسلة…', sm_nav:'استخدم ↑ ↓ للتنقل', sm_open:'Enter للفتح', sm_none:'لا نتائج لـ «{q}».', sm_close:'إغلاق',
   toast_cart:'أُضيف إلى السلة', toast_fav:'أُضيف إلى المفضلة', toast_unfav:'أُزيل من المفضلة',
   p_add:'أضف إلى السلة', p_added:'تمت الإضافة', p_fav:'المفضلة', p_more:'من نفس السلسلة', p_lang:'اللغة', p_type:'الفئة', p_genre:'التصنيف', p_back:'الكتالوج',
-  cr_home:'الرئيسية', cr_nav:'مسار التنقل', p_syn:'الملخص', p_sheet:'البطاقة التقنية', p_nod:'لا يوجد وصف لهذا المجلد بعد.', p_max:'هذا هو الحد الأقصى المتاح.', p_qty:'الكمية', p_author:'المؤلف',
+  cr_home:'الرئيسية', cr_nav:'مسار التنقل', p_syn:'الملخص', p_sheet:'البطاقة التقنية', p_nod:'لا يوجد وصف لهذا المجلد بعد.', p_qty:'الكمية', p_author:'المؤلف',
   sh_title:'التوصيل والدفع', sh_rates:'التكلفة التقديرية',
   s1t:'الطلب', s1d:'أضف المجلدات إلى السلة وأرسل طلبك.', s2t:'التأكيد', s2d:'نراسلك على واتساب لمراجعة الطلب معك.', s3t:'الاستلام', s3d:'تدفع عند وصول الطرد إلى بيتك.'
 }};
@@ -1691,11 +1690,10 @@ function allCard(href,tagK,titleK,items){
 }
 function rowSec(secK,items,all,alt){
   if(!items.length) return '';
-  /* La carte "voir tout" doit toujours apparaître visuellement à droite,
-     quelle que soit la langue. En RTL (ar), le premier élément du DOM est
-     celui affiché à droite : on l'y place donc en premier dans ce cas. */
+  /* Les rangées sont forcées en LTR (même en arabe) : l'ordre DOM est donc
+     toujours gauche→droite, la carte "voir tout" reste à la fin (à droite). */
   const seeAll=allCard(all.href,all.tag,all.title,items), cards=items.map(card).join('');
-  const rowHtml=(lang==='ar')?(seeAll+cards):(cards+seeAll);
+  const rowHtml=cards+seeAll;
   return '<section class="sec'+(alt?' alt':'')+'"><div class="sec-in pad w-xl"><div class="sec-top"><h2 class="sec-h">'+t(secK)+'</h2></div><div class="row">'
     +rowHtml+'</div></div></section>';
 }
@@ -1848,24 +1846,16 @@ function viewProduct(id){
   const more=same.concat(rest).slice(0,4), fav=favs.includes(it.id);
   const gl=it.s.genres.map(g=>t('g_'+g)).join(', ');
   const max=Math.max(1,+it.s.stock||99);
-  const tags='<div class="pd-tags">'
-   +'<span class="tag">'+t('p_type')+' : '+t('ty_'+it.s.type)+'</span>'
-   +(it.s.author?'<span class="tag">'+t('p_author')+' : '+esc(it.s.author)+'</span>':'')
-   +(isGood(it.s.type)||!gl?'':'<span class="tag">'+t('p_genre')+' : '+esc(gl)+'</span>')
-   +(isGood(it.s.type)?'':'<span class="tag acc">'+t('p_lang')+' : '+t('lang_'+it.s.lang)+'</span>')
-   +'</div>';
   const sheet='<dl>'+(isGood(it.s.type)?'':'<dt>'+t('p_lang')+'</dt><dd>'+t('lang_'+it.s.lang)+'</dd>')+'<dt>'+t('p_type')+'</dt><dd>'+t('ty_'+it.s.type)+'</dd>'+(isGood(it.s.type)?'':'<dt>'+t('p_genre')+'</dt><dd>'+esc(gl)+'</dd>')+(it.s.author?'<dt>'+t('p_author')+'</dt><dd>'+esc(it.s.author)+'</dd>':'')+'<dt>'+t('unit_price')+'</dt><dd>'+fmt(it.price)+'</dd></dl>';
   return '<section class="page pad w-lg">'
    +'<nav class="crumbs" aria-label="'+t('cr_nav')+'"><a href="#/">'+t('cr_home')+'</a><i>/</i><a href="#/catalogue">'+t('cat_title')+'</a><i>/</i><span aria-current="page">'+esc(itemTitle(it))+'</span></nav>'
    +'<div class="pd"><div class="pd-c">'+itemCover(it)+'</div><div><p class="c-ser">'+esc(serTag(it))+'</p><h1>'+esc(itemTitle(it))+'</h1>'
-   +tags
    +'<p class="pr">'+(it.old?'<s>'+fmt(it.old)+'</s>':'')+'<b>'+fmt(it.price)+'</b></p>'
    +'<div class="acts">'
    +'<div class="qty" role="group" aria-label="'+t('p_qty')+'"><button type="button" data-pq="-" aria-label="'+t('qty_less')+'">\u2212</button><output id="pdQty">1</output><button type="button" data-pq="+" aria-label="'+t('qty_more')+'">+</button></div>'
    +'<button class="btn atc" type="button" id="pdAdd" data-add="'+it.id+'" data-price="'+it.price+'" data-max="'+max+'"><span class="atc-i">'+IC.cart+'</span><span class="atc-l">'+t('p_add')+' \u2014 '+fmt(it.price)+'</span><span class="atc-ok" aria-hidden="true">'+ICK+t('p_added')+'</span></button>'
    +'<button class="rb fv" type="button" style="width:54px;height:54px" data-fav="'+it.id+'" aria-pressed="'+fav+'" aria-label="'+t('p_fav')+'">'+IC.heart+'</button>'
    +'</div>'
-   +'<p class="stock-max" id="pdStock"'+(max<2?'':' hidden')+'>'+t('p_max')+'</p>'
    +'<div class="pd-tabs" role="tablist">'
    +'<button class="pd-tab" type="button" role="tab" id="pdt-s" aria-selected="true" aria-controls="pdsyn">'+t('p_syn')+'</button>'
    +'<button class="pd-tab" type="button" role="tab" id="pdt-t" aria-selected="false" aria-controls="pdsheet">'+t('p_sheet')+'</button>'
@@ -2572,7 +2562,6 @@ app.addEventListener('click',e=>{
     const max=+add.dataset.max||99; let q=+out.textContent||1;
     q=b.dataset.pq==='+'?Math.min(max,q+1):Math.max(1,q-1);
     out.textContent=q;
-    const w=$('#pdStock'); if(w) w.hidden=q<max;
     const l=add.querySelector('.atc-l'); if(l) l.textContent=t('p_add')+' \u2014 '+fmt((+add.dataset.price||0)*q);
     return;
   }
@@ -2586,7 +2575,7 @@ app.addEventListener('click',e=>{
     atcFx(b);
     const o=b.id==='pdAdd'?$('#pdQty'):null, q=o?Math.max(1,+o.textContent||1):1;
     addCart(b.dataset.add,q);
-    if(o){ o.textContent='1'; const w=$('#pdStock'); if(w) w.hidden=(+b.dataset.max||99)<2; const l=b.querySelector('.atc-l'); if(l) l.textContent=t('p_add')+' \u2014 '+fmt(+b.dataset.price||0); }
+    if(o){ o.textContent='1'; const l=b.querySelector('.atc-l'); if(l) l.textContent=t('p_add')+' \u2014 '+fmt(+b.dataset.price||0); }
     return;
   }
   if((b=e.target.closest('[data-fav]'))) return toggleFav(b.dataset.fav);
