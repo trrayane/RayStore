@@ -107,4 +107,22 @@ async function notifyNewOrder(order) {
   }
 }
 
-module.exports = { notifyNewOrder };
+async function notifyStock(a) {
+  if (!TOKEN || !CHAT) {
+    console.warn('[telegram] alerte stock non envoyée : TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID manquants');
+    return false;
+  }
+  const link = a.url || '';
+  const txt = a.kind === 'oos'
+    ? `\ud83d\udd34 <b>\u00c9PUIS\u00c9</b> \u2014 ${h(a.name)}\nAucun exemplaire en stock.${link ? `\n\ud83d\udd17 ${h(link)}` : ''}`
+    : `\ud83d\udfe2 <b>R\u00c9ASSORT</b> \u2014 ${h(a.name)}\n${Math.max(1, Number(a.stock) || 0)} exemplaire(s) en stock.${link ? `\n\ud83d\udd17 ${h(link)}` : ''}`;
+  try {
+    await call('sendMessage', { chat_id: CHAT, text: txt, parse_mode: 'HTML', disable_web_page_preview: true });
+    return true;
+  } catch (err) {
+    console.error('[telegram] alerte stock (' + a.kind + ', ' + a.name + ') :', err.message);
+    return false;
+  }
+}
+
+module.exports = { notifyNewOrder, notifyStock };

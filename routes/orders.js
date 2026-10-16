@@ -3,6 +3,7 @@ const { query, pool, safeParse, safeStringify } = require('../db');
 const { generateRef, generateId } = require('../utils');
 const { authRequired } = require('../middleware/auth');
 const { notifyNewOrder } = require('../telegram');
+const { checkStockAlerts } = require('../stock_alerts');
 
 const router = express.Router();
 
@@ -75,6 +76,7 @@ router.post('/', async (req, res) => {
   const st = Math.max(0, Number(subTotal)||0);
   const tt = Math.max(0, Number(total)||st+sc);
   const wa = buildWaUrl({ ref, storeWhatsapp, name, phone, wilaya, addr: addr||'', shipMethod, shipCost: sc, subTotal: st, total: tt, lines: cleanLines });
+  let need = new Map();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -83,7 +85,7 @@ router.post('/', async (req, res) => {
       await client.query('ROLLBACK');
       return res.json({ success: true, id: existing.rows[0].id, ref, wa_url: existing.rows[0].wa_url, duplicate: true });
     }
-    const need = aggLines(cleanLines);
+    need = aggLines(cleanLines);
     const bad = [];
     for (const [k, q] of need) {
       const r = await client.query('SELECT stock FROM series WHERE k=$1 FOR UPDATE', [k]);
@@ -113,6 +115,7 @@ router.post('/', async (req, res) => {
     notes: String(notes||''), shipMethod, shipCost: sc, subTotal: st, total: tt,
     lines: cleanLines, created: new Date().toISOString()
   }).catch((e) => console.error('[telegram] :', e && e.message));
+  await checkStockAlerts([...need.keys()]);
   res.status(201).json({ success: true, id, ref, wa_url: wa });
 });
 
@@ -123,6 +126,7 @@ router.patch('/:id/status', authRequired, async (req, res) => {
   const allowed = ['new','confirmed','shipped','delivered','cancelled','returned'];
   if (!allowed.includes(status)) return res.status(400).json({ error: 'Statut invalide' });
   const client = await pool.connect();
+  let touched = [];
   try {
     await client.query('BEGIN');
     const exists = await client.query('SELECT id, status, lines, stock_done FROM orders WHERE id=$1 FOR UPDATE', [id]);
@@ -140,11 +144,13 @@ router.patch('/:id/status', authRequired, async (req, res) => {
         for (const [k, q] of aggLines(safeParse(row.lines, []))) {
           await client.query('UPDATE series SET stock=stock+$1 WHERE k=$2', [q, k]);
         }
+        touched = [...aggLines(safeParse(row.lines, [])).keys()];
         await client.query('UPDATE orders SET stock_done=FALSE WHERE id=$1', [id]);
       } else if (consume && !done) {
         for (const [k, q] of aggLines(safeParse(row.lines, []))) {
           await client.query('UPDATE series SET stock=GREATEST(stock-$1,0) WHERE k=$2', [q, k]);
         }
+        touched = [...aggLines(safeParse(row.lines, [])).keys()];
         await client.query('UPDATE orders SET stock_done=TRUE WHERE id=$1', [id]);
       }
       await client.query('UPDATE orders SET status=$1, notes=$2 WHERE id=$3', [status, notes||'', id]);
@@ -152,6 +158,7 @@ router.patch('/:id/status', authRequired, async (req, res) => {
       await client.query('UPDATE orders SET notes=$1 WHERE id=$2', [notes||'', id]);
     }
     await client.query('COMMIT');
+    if (touched.length) await checkStockAlerts(touched);
     res.json({ success: true });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
@@ -165,6 +172,7 @@ router.delete('/:id', authRequired, async (req, res) => {
   const id = String(req.params.id||'');
   if (!id) return res.status(400).json({ error: 'ID requis' });
   const client = await pool.connect();
+  let touched = [];
   try {
     await client.query('BEGIN');
     const r = await client.query('SELECT lines, stock_done FROM orders WHERE id=$1 FOR UPDATE', [id]);
@@ -172,9 +180,11 @@ router.delete('/:id', authRequired, async (req, res) => {
       for (const [k, q] of aggLines(safeParse(r.rows[0].lines, []))) {
         await client.query('UPDATE series SET stock=stock+$1 WHERE k=$2', [q, k]);
       }
+      touched = [...aggLines(safeParse(r.rows[0].lines, [])).keys()];
     }
     await client.query('DELETE FROM orders WHERE id=$1', [id]);
     await client.query('COMMIT');
+    if (touched.length) await checkStockAlerts(touched);
     res.json({ success: true });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});

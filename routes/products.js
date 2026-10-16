@@ -1,6 +1,7 @@
 const express = require('express');
 const { query, pool, safeParse, safeStringify } = require('../db');
 const { authRequired } = require('../middleware/auth');
+const { checkStockAlert, checkStockAlerts } = require('../stock_alerts');
 
 const router = express.Router();
 
@@ -66,6 +67,7 @@ router.post('/', authRequired, async (req, res) => {
     `INSERT INTO series (k,name,short,type,lang,genres,price,old,stock,vols,style,a,b,label,feat,img,art,author,description,active,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
     [n.k, n.name, n.short, n.type, n.lang, safeStringify(n.genres), n.price, n.old, n.stock, safeStringify(n.vols), n.style, n.a, n.b, n.label, n.feat, n.img, n.art, n.author, n.desc, n.active, n.sort_order]
   );
+  await checkStockAlert(n.k);
   res.status(201).json({ success: true });
 });
 
@@ -83,6 +85,7 @@ router.put('/replace', authRequired, async (req, res) => {
       );
     }
     await client.query('COMMIT');
+    await checkStockAlerts(clean.map((s) => s.k));
     res.json({ success: true, count: clean.length });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -102,6 +105,7 @@ router.put('/:k', authRequired, async (req, res) => {
     `UPDATE series SET name=$1,short=$2,type=$3,lang=$4,genres=$5,price=$6,old=$7,stock=$8,vols=$9,style=$10,a=$11,b=$12,label=$13,feat=$14,img=$15,art=$16,author=$17,description=$18,active=$19,sort_order=$20 WHERE k=$21`,
     [n.name, n.short, n.type, n.lang, safeStringify(n.genres), n.price, n.old, n.stock, safeStringify(n.vols), n.style, n.a, n.b, n.label, n.feat, n.img, n.art, n.author, n.desc, n.active, n.sort_order, k]
   );
+  await checkStockAlert(k);
   res.json({ success: true });
 });
 
