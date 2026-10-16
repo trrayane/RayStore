@@ -140,6 +140,7 @@ async function initDb() {
   `);
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS com TEXT DEFAULT ''`);
   await query(`ALTER TABLE series ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 99`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_done BOOLEAN DEFAULT FALSE`);
 }
 
 function safeParse(v, fallback) {

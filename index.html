@@ -591,6 +591,8 @@ table.t{width:100%;border-collapse:collapse;min-width:860px}
 .st.shipped{background:var(--ink);color:#fff}
 .st.delivered{background:var(--pos)}
 .st.cancelled{background:#fca5a5}
+.st.returned{background:#fcd34d}
+button:disabled{opacity:.45;cursor:not-allowed}
 .fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:0 20px}
 .fgrid .full{grid-column:1/-1}
 @media (max-width:639px){.fgrid{grid-template-columns:1fr}}
@@ -1515,6 +1517,7 @@ fr:{
   co_title:'Commande', co_back:'Retour au panier', co_fin:'Finaliser la commande', co_info:'Informations de livraison', co_order:'Votre commande', co_sub:'Sous-total', co_notes:'Notes (facultatif)', co_remember:'Se souvenir de mes informations pour la prochaine fois', co_captcha:'Vérifie le captcha pour continuer.', f_name:'Nom complet', f_phone:'Téléphone', f_wilaya:'Wilaya', f_com:'Commune', f_addr:'Adresse complète', f_notes_ph:'Ex : Appeler avant de livrer…', ship_method:'Type de livraison', ship_cost:'Livraison', total:'Total', confirm:'Confirmer la commande',
   err_name:'Entre ton nom complet.', err_phone:'Numéro invalide : 10 chiffres, il commence par 05, 06 ou 07.', err_wilaya:'Choisis ta wilaya.', err_com:'Indique ta commune.', err_addr:'Indique ton adresse complète.',
   ok_t:'Commande passée !', ok_d:'Merci ! Ta commande a bien été enregistrée. On t\u2019appelle très vite pour confirmer la livraison.', ok_btn:'OK', ok_home:'Retour à la boutique', choose_wilaya:'Choisis ta wilaya',
+  oos:'Épuisé', oos_msg:'Stock épuisé — commande impossible', stock_msg:'Stock disponible : {n}', stock_lbl:'Stock',
   m_title:'Nouvelle commande', m_name:'Nom', m_phone:'Téléphone', m_wilaya:'Wilaya', m_addr:'Adresse', m_ship:'Livraison', m_prod:'Produits', m_total:'Total',
   fav_title:'Favoris', fav_sub:'Volumes enregistrés pour plus tard ({n})', fav_empty:'Aucun favori pour l\u2019instant', fav_empty_d:'Parcours le catalogue et enregistre les volumes que tu veux retrouver.', browse_manga:'Voir les mangas',
   sm_ph:'Chercher un manga, un goodie…', sm_nav:'↑ ↓ pour naviguer', sm_open:'Entrée pour ouvrir', sm_none:'Aucun résultat pour « {q} ».', sm_close:'Fermer',
@@ -1553,6 +1556,7 @@ ar:{
   co_title:'إتمام الطلب', co_back:'العودة إلى السلة', co_fin:'إتمام الطلب', co_info:'معلومات التوصيل', co_order:'طلبك', co_sub:'المجموع الفرعي', co_notes:'ملاحظات (اختياري)', co_remember:'تذكّر بمعلوماتي على هذا الجهاز', co_captcha:'أكّد أنك لست روبوتاً للمتابعة.', f_name:'الاسم الكامل', f_phone:'الهاتف', f_wilaya:'الولاية', f_com:'البلدية', f_addr:'العنوان الكامل', f_notes_ph:'مثال: اتصل بي قبل التسليم…', ship_method:'طريقة التوصيل', ship_cost:'التوصيل', total:'المجموع', confirm:'تأكيد الطلب',
   err_name:'أدخل اسمك الكامل.', err_phone:'رقم غير صحيح: 10 أرقام تبدأ بـ 05 أو 06 أو 07.', err_wilaya:'اختر ولايتك.', err_com:'أدخل بلديتك.', err_addr:'أدخل عنوانك الكامل.',
   ok_t:'تم تأكيد الطلب', ok_d:'شكراً! تم تسجيل طلبك بنجاح. سنتصل بك قريباً لتأكيد التوصيل.', ok_btn:'حسناً', ok_home:'العودة إلى المتجر', choose_wilaya:'اختر ولايتك',
+  oos:'نفذ المخزون', oos_msg:'الكمية نفدت — لا يمكن الطلب', stock_msg:'المخزون المتوفر : {n}', stock_lbl:'المخزون',
   m_title:'طلب جديد', m_name:'الاسم', m_phone:'الهاتف', m_wilaya:'الولاية', m_addr:'العنوان', m_ship:'التوصيل', m_prod:'المنتجات', m_total:'المجموع',
   fav_title:'المفضلة', fav_sub:'مجلدات حفظتها لوقت لاحق ({n})', fav_empty:'لا توجد مفضلات بعد', fav_empty_d:'تصفّح الكتالوج واحفظ المجلدات التي تريد العودة إليها.', browse_manga:'تصفّح المانجا',
   sm_ph:'ابحث عن مانجا أو سلسلة…', sm_nav:'استخدم ↑ ↓ للتنقل', sm_open:'Enter للفتح', sm_none:'لا نتائج لـ «{q}».', sm_close:'إغلاق',
@@ -1590,7 +1594,11 @@ async function apiReq(path,opt){
   const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),opt.timeout||8000);
   try{
     const r=await fetch(API_BASE+path,{method:opt.method||'GET',headers:apiHeaders(opt.auth?apiTok():null),body:opt.body!==undefined?JSON.stringify(opt.body):undefined,signal:ctl.signal});
-    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(!r.ok){
+      const err=new Error('HTTP '+r.status); err.status=r.status;
+      err.body=await r.json().catch(()=>null);
+      throw err;
+    }
     return await r.json().catch(()=>null);
   }finally{ clearTimeout(to); }
 }
@@ -1613,6 +1621,17 @@ function pushStoreAll(){
     pushAllProducts(), pushSoon(), pushHero(),
     pushSettings({store:{name:STORE.name,whatsapp:STORE.whatsapp,instagram:STORE.instagram},ship:{home:SHIP.home,stopdesk:SHIP.stopdesk},homesec:HOMESEC})
   ]);
+}
+function refreshStock(rerender){
+  return apiReq('/api/products').then(pr=>{
+    if(!Array.isArray(pr)) return;
+    const localOnly=admOK&&SERIES.filter(s=>s.k&&!pr.some(x=>x.k===s.k));
+    SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; }).concat(localOnly||[]);
+    SERIES.forEach(normSeries);
+    try{ persist(); }catch(x){}
+    rebuild();
+    if(rerender) render();
+  }).catch(()=>{});
 }
 let bootDone=false;
 async function bootSync(){
@@ -1746,12 +1765,16 @@ const serCover=(k,v)=>itemCover(byId(k+'-'+v));
 
 /* ================= Cartes ================= */
 function card(it){
-  const fav=favs.includes(it.id), ti=itemTitle(it);
-  return '<article class="card"><a class="c-img" href="#/p/'+it.id+'" tabindex="-1" aria-hidden="true">'+itemCover(it)+(it.old?'<span class="pillb">'+t('promo')+'</span>':'')+'</a>'
+  const fav=favs.includes(it.id), ti=itemTitle(it), oos=!(+it.s.stock>0);
+  const pills=(it.old?'<span class="pillb">'+t('promo')+'</span>':'')+(oos?'<span class="pillb" style="background:#c0392b'+(it.old?';bottom:38px':'')+'">'+t('oos')+'</span>':'');
+  return '<article class="card"><a class="c-img" href="#/p/'+it.id+'" tabindex="-1" aria-hidden="true">'+itemCover(it)+pills+'</a>'
    +'<div class="c-body"><p class="c-ser">'+esc(serTag(it))+'</p><h3 class="c-t"><a href="#/p/'+it.id+'">'+esc(ti)+'</a></h3>'
    +'<div class="c-foot"><p class="c-pr">'+(it.old?'<s>'+fmt(it.old)+'</s>':'')+'<b>'+fmt(it.price)+'</b></p>'
    +'<div class="c-act"><button class="rb s fv" type="button" data-fav="'+it.id+'" aria-pressed="'+fav+'" aria-label="'+esc(t('a_fav')+' : '+ti)+'">'+IC.heart+'</button>'
-   +'<button class="rb s atc-s" type="button" data-add="'+it.id+'" aria-label="'+esc(t('p_add')+' : '+ti)+'"><span class="atc-i">'+IC.cart+'</span><span class="atc-c">'+ICK+'</span></button></div></div></div></article>';
+   +(oos
+     ?'<button class="rb s atc-s" type="button" disabled aria-label="'+esc(t('oos')+' : '+ti)+'"><span class="atc-i">'+IC.cart+'</span></button>'
+     :'<button class="rb s atc-s" type="button" data-add="'+it.id+'" aria-label="'+esc(t('p_add')+' : '+ti)+'"><span class="atc-i">'+IC.cart+'</span><span class="atc-c">'+ICK+'</span></button>')
+   +'</div></div></div></article>';
 }
 function allCard(href,tagK,titleK,items){
   const a=items[0], b=items[1]||items[0], c=items[2]||items[1]||items[0];
@@ -1920,15 +1943,22 @@ function viewProduct(id){
   const same=ITEMS.filter(x=>x.s===it.s&&x!==it), rest=ITEMS.filter(x=>x.s.type===it.s.type&&x.s!==it.s);
   const more=same.concat(rest).slice(0,4), fav=favs.includes(it.id);
   const gl=it.s.genres.map(g=>t('g_'+g)).join(', ');
-  const max=Math.max(1,+it.s.stock||99);
-  const sheet='<dl>'+(isGood(it.s.type)?'':'<dt>'+t('p_lang')+'</dt><dd>'+t('lang_'+it.s.lang)+'</dd>')+'<dt>'+t('p_type')+'</dt><dd>'+t('ty_'+it.s.type)+'</dd>'+(isGood(it.s.type)?'':'<dt>'+t('p_genre')+'</dt><dd>'+esc(gl)+'</dd>')+(it.s.author?'<dt>'+t('p_author')+'</dt><dd>'+esc(it.s.author)+'</dd>':'')+'<dt>'+t('unit_price')+'</dt><dd>'+fmt(it.price)+'</dd></dl>';
+  const stock=Math.max(0,+it.s.stock||0), oos=stock<=0;
+  const max=oos?1:stock;
+  const stockLine=oos?esc(t('oos')):esc(t('stock_msg',{n:stock}));
+  const sheet='<dl>'+(isGood(it.s.type)?'':'<dt>'+t('p_lang')+'</dt><dd>'+t('lang_'+it.s.lang)+'</dd>')+'<dt>'+t('p_type')+'</dt><dd>'+t('ty_'+it.s.type)+'</dd>'+(isGood(it.s.type)?'':'<dt>'+t('p_genre')+'</dt><dd>'+esc(gl)+'</dd>')+(it.s.author?'<dt>'+t('p_author')+'</dt><dd>'+esc(it.s.author)+'</dd>':'')+'<dt>'+t('unit_price')+'</dt><dd>'+fmt(it.price)+'</dd><dt>'+t('stock_lbl')+'</dt><dd'+(oos?' style="color:#c0392b;font-weight:700"':'')+'>'+stockLine+'</dd></dl>';
+  const qtyG=oos?'':'<div class="qty" role="group" aria-label="'+t('p_qty')+'"><button type="button" data-pq="-" aria-label="'+t('qty_less')+'">\u2212</button><output id="pdQty">1</output><button type="button" data-pq="+" aria-label="'+t('qty_more')+'">+</button></div>';
+  const addBtn=oos
+    ?'<button class="btn atc" type="button" id="pdAdd" disabled aria-disabled="true"><span class="atc-i">'+IC.cart+'</span><span class="atc-l">'+t('oos')+'</span></button>'
+    :'<button class="btn atc" type="button" id="pdAdd" data-add="'+it.id+'" data-price="'+it.price+'" data-max="'+max+'"><span class="atc-i">'+IC.cart+'</span><span class="atc-l">'+t('p_add')+' \u2014 '+fmt(it.price)+'</span><span class="atc-ok" aria-hidden="true">'+ICK+t('p_added')+'</span></button>';
   return '<section class="page pad w-lg">'
    +'<nav class="crumbs" aria-label="'+t('cr_nav')+'"><a href="#/">'+t('cr_home')+'</a><i>/</i><a href="#/catalogue">'+t('cat_title')+'</a><i>/</i><span aria-current="page">'+esc(itemTitle(it))+'</span></nav>'
    +'<div class="pd"><div class="pd-c">'+itemCover(it)+'</div><div><p class="c-ser">'+esc(serTag(it))+'</p><h1>'+esc(itemTitle(it))+'</h1>'
    +'<p class="pr">'+(it.old?'<s>'+fmt(it.old)+'</s>':'')+'<b>'+fmt(it.price)+'</b></p>'
+   +'<p class="hint" style="margin:2px 0 10px'+(oos?';color:#c0392b;font-weight:700':'')+'">'+stockLine+'</p>'
    +'<div class="acts">'
-   +'<div class="qty" role="group" aria-label="'+t('p_qty')+'"><button type="button" data-pq="-" aria-label="'+t('qty_less')+'">\u2212</button><output id="pdQty">1</output><button type="button" data-pq="+" aria-label="'+t('qty_more')+'">+</button></div>'
-   +'<button class="btn atc" type="button" id="pdAdd" data-add="'+it.id+'" data-price="'+it.price+'" data-max="'+max+'"><span class="atc-i">'+IC.cart+'</span><span class="atc-l">'+t('p_add')+' \u2014 '+fmt(it.price)+'</span><span class="atc-ok" aria-hidden="true">'+ICK+t('p_added')+'</span></button>'
+   +qtyG
+   +addBtn
    +'<button class="rb fv" type="button" style="width:54px;height:54px" data-fav="'+it.id+'" aria-pressed="'+fav+'" aria-label="'+t('p_fav')+'">'+IC.heart+'</button>'
    +'</div>'
    +'<div class="pd-tabs" role="tablist">'
@@ -2009,7 +2039,7 @@ async function submitOrder(){
   try{ if($('#f-rem').checked) localStorage.setItem('tk-form',JSON.stringify({name:form.name,phone:form.phone,wil:wilaya,com:com,addr:form.addr})); else localStorage.removeItem('tk-form'); }catch(x){}
 
   const ref='CMD-'+Date.now().toString(36).toUpperCase().slice(-6)+Math.random().toString(36).slice(2,4).toUpperCase();
-  const lines=Object.keys(cart).map(id=>{ const it=byId(id); return {id,title:itemTitle(it),qty:cart[id],price:it.price,img:it.s.img||'',style:it.s.style,a:it.s.a,b:it.s.b,vol:it.vol,short:it.s.short||it.s.name,author:it.s.author||''}; });
+  const lines=Object.keys(cart).map(id=>{ const it=byId(id); return {id,k:it.s.k,title:itemTitle(it),qty:cart[id],price:it.price,img:it.s.img||'',style:it.s.style,a:it.s.a,b:it.s.b,vol:it.vol,short:it.s.short||it.s.name,author:it.s.author||''}; });
   const sub=cartSum(), sc=shipCost(), tot=sub+sc;
   const order={id:ref,date:new Date().toISOString(),name,phone,wil:wilName(wil),com,addr,notes,ship:shipM,shipCost:sc,sub,total:tot,status:'new',lines};
   ordBusy=true;
@@ -2017,10 +2047,19 @@ async function submitOrder(){
   let srv=null;
   try{
     srv=await apiReq('/api/orders',{method:'POST',timeout:10000,body:{ref,name,phone,wilaya:order.wil,com,addr,notes,shipMethod:shipM,shipCost:sc,subTotal:sub,total:tot,lines,storeWhatsapp:STORE.whatsapp}});
-  }catch(x){ srv=null; }
+  }catch(x){
+    if(x&&x.status===409){
+      ordBusy=false; if(sb) sb.disabled=false;
+      toast((x.body&&x.body.error)||t('oos_msg'));
+      refreshStock(true);
+      return;
+    }
+    srv=null;
+  }
   if(srv&&srv.id) order._srvId=srv.id; else order._pending=true;
   orders.unshift(order); saveOrders();
   cart={}; save(); updateHdr(); ordBusy=false;
+  refreshStock(false);
   $('#app').innerHTML=viewCheckout(true); window.scrollTo(0,0);
   if(!srv) toast('Commande enregistrée — serveur injoignable, envoi en attente');
 }
@@ -2031,7 +2070,10 @@ async function pushPendingOrders(){
     try{
       const r=await apiReq('/api/orders',{method:'POST',timeout:10000,body:{ref:o.id,name:o.name,phone:o.phone,wilaya:o.wil,com:o.com||'',addr:o.addr||'',notes:o.notes||'',shipMethod:o.ship,shipCost:o.shipCost,subTotal:o.sub,total:o.total,lines:o.lines,storeWhatsapp:STORE.whatsapp}});
       if(r&&r.id){ o._srvId=r.id; o._pending=false; }
-    }catch(x){ break; }
+    }catch(x){
+      if(x&&x.status===409){ o._pending=false; break; }
+      break;
+    }
   }
   saveOrders();
 }
@@ -2077,7 +2119,7 @@ async function syncOrders(){
   }catch(x){}
 }
 const AD={q:'',type:'all',ost:'all',sel:{}};
-const STAT={new:'Nouvelle',confirmed:'Confirmée',shipped:'Expédiée',delivered:'Livrée',cancelled:'Annulée'};
+const STAT={new:'Nouvelle',confirmed:'Confirmée',shipped:'Expédiée',delivered:'Livrée',cancelled:'Annulée',returned:'Retournée'};
 const fmtA=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f')+'\u00a0DA';
 const glab=g=>I18N.fr['g_'+g]||g;
 const intl=p=>'213'+String(p).replace(/^0/,'');
@@ -2193,7 +2235,7 @@ function admView(p){
 
 /* ---- Tableau de bord ---- */
 function admDash(){
-  const act=orders.filter(o=>o.status!=='cancelled'), rev=act.reduce((a,o)=>a+o.total,0), nn=orders.filter(o=>o.status==='new').length, pr=SERIES.filter(s=>s.old).length;
+  const act=orders.filter(o=>!['cancelled','returned'].includes(o.status)), rev=act.reduce((a,o)=>a+o.total,0), nn=orders.filter(o=>o.status==='new').length, pr=SERIES.filter(s=>s.old).length;
   const days=[]; for(let i=6;i>=0;i--){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-i); days.push(d); }
   const cnt=days.map(d=>orders.filter(o=>{ const x=new Date(o.date); x.setHours(0,0,0,0); return x.getTime()===d.getTime(); }).length);
   const mx=Math.max(1,...cnt);
@@ -2697,7 +2739,14 @@ function cartToast(id){
   const to=setTimeout(kill,1800);
   el.querySelector('.tcard-x').addEventListener('click',()=>{ clearTimeout(to); kill(); });
 }
-function addCart(id,n){ cart[id]=(cart[id]||0)+(n||1); save(); updateHdr(); cartToast(id); const n2=$('#cartN'); if(n2){ n2.classList.remove('bump'); void n2.offsetWidth; n2.classList.add('bump'); } }
+function addCart(id,n){
+  const it=byId(id), st=it?Math.max(0,+it.s.stock||0):0;
+  if(st<=0){ toast(t('oos_msg')); return; }
+  const cur=cart[id]||0, q=n||1;
+  if(cur>=st){ toast(t('stock_msg',{n:st})); return; }
+  if(cur+q>st) toast(t('stock_msg',{n:st}));
+  cart[id]=Math.min(st,cur+q); save(); updateHdr(); cartToast(id); const n2=$('#cartN'); if(n2){ n2.classList.remove('bump'); void n2.offsetWidth; n2.classList.add('bump'); }
+}
 function atcFx(b){
   if(b.classList.contains('go')) return;
   b.style.setProperty('--w',b.offsetWidth+'px');
@@ -2738,7 +2787,7 @@ app.addEventListener('click',e=>{
   }
   if((b=e.target.closest('[data-fav]'))) return toggleFav(b.dataset.fav);
   if((b=e.target.closest('[data-flip]'))){ const o=b.classList.toggle('on'); b.setAttribute('aria-pressed',String(o)); return; }
-  if((b=e.target.closest('[data-inc]'))){ cart[b.dataset.inc]++; save(); render(); return; }
+  if((b=e.target.closest('[data-inc]'))){ const id=b.dataset.inc, it=byId(id), st=it?Math.max(0,+it.s.stock||0):99; if(cart[id]<st) cart[id]++; else toast(t('stock_msg',{n:st})); save(); render(); return; }
   if((b=e.target.closest('[data-dec]'))){ const id=b.dataset.dec; cart[id]--; if(cart[id]<=0) delete cart[id]; save(); render(); return; }
   if((b=e.target.closest('[data-rm]'))){ delete cart[b.dataset.rm]; save(); render(); return; }
   if((b=e.target.closest('[data-f]'))){
