@@ -47,6 +47,7 @@ async function initDb() {
       genres TEXT,
       price INTEGER NOT NULL DEFAULT 0,
       old INTEGER DEFAULT 0,
+      stock INTEGER DEFAULT 99,
       vols TEXT,
       style TEXT,
       a TEXT,
@@ -138,6 +139,7 @@ async function initDb() {
     $$;
   `);
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS com TEXT DEFAULT ''`);
+  await query(`ALTER TABLE series ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 99`);
 }
 
 function safeParse(v, fallback) {

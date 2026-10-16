@@ -1594,6 +1594,66 @@ async function apiReq(path,opt){
     return await r.json().catch(()=>null);
   }finally{ clearTimeout(to); }
 }
+/* ---- Synchronisation catalogue / paramètres avec le serveur ---- */
+const syncFail=()=>toast('Sauvegarde serveur impossible (backend injoignable)');
+function srvSeries(s){
+  return {k:s.k,name:s.name,short:s.short||'',type:s.type,lang:s.lang||'',genres:Array.isArray(s.genres)?s.genres:[],price:s.price||0,old:s.old||0,
+    stock:(s.stock==null||s.stock==='')?99:Math.max(0,Math.floor(+s.stock||0)),vols:Array.isArray(s.vols)?s.vols:[],style:s.style||s.type,
+    a:s.a,b:s.b,label:s.label||'',feat:!!s.feat,img:s.img||'',art:s.art||'',author:s.author||'',desc:s.desc||''};
+}
+function pushSeries(s){ return apiReq('/api/products/'+encodeURIComponent(s.k),{method:'PUT',auth:true,body:srvSeries(s),timeout:20000}); }
+function pushNewSeries(s){ return apiReq('/api/products',{method:'POST',auth:true,body:srvSeries(s),timeout:20000}); }
+function pushDelSeries(k){ return apiReq('/api/products/'+encodeURIComponent(k),{method:'DELETE',auth:true}); }
+function pushAllProducts(){ return apiReq('/api/products/replace',{method:'PUT',auth:true,body:{series:SERIES.map(srvSeries)},timeout:60000}); }
+function pushSoon(){ return apiReq('/api/soon/replace',{method:'PUT',auth:true,body:{soon:SOON.map(x=>({name:x.name,a:x.a,b:x.b,style:x.style,img:x.img||''}))},timeout:20000}); }
+function pushHero(){ return apiReq('/api/hero',{method:'PUT',auth:true,body:{items:HERO},timeout:20000}); }
+function pushSettings(patch){ return apiReq('/api/settings',{method:'PUT',auth:true,body:patch,timeout:20000}); }
+function pushStoreAll(){
+  return Promise.all([
+    pushAllProducts(), pushSoon(), pushHero(),
+    pushSettings({store:{name:STORE.name,whatsapp:STORE.whatsapp,instagram:STORE.instagram},ship:{home:SHIP.home,stopdesk:SHIP.stopdesk},homesec:HOMESEC})
+  ]);
+}
+let bootDone=false;
+async function bootSync(){
+  try{
+    const res=await Promise.all([
+      apiReq('/api/settings').catch(()=>null),
+      apiReq('/api/products').catch(()=>null),
+      apiReq('/api/soon').catch(()=>null),
+      apiReq('/api/hero').catch(()=>null)
+    ]);
+    const st=res[0], pr=res[1], so=res[2], he=res[3];
+    if(st&&st.store){
+      if(st.store.name) STORE.name=String(st.store.name);
+      if(st.store.whatsapp) STORE.whatsapp=String(st.store.whatsapp).replace(/\D/g,'');
+      if(st.store.instagram!=null) STORE.instagram=String(st.store.instagram);
+      if(st.ship){ if(st.ship.home!=null) SHIP.home=Number(st.ship.home)||0; if(st.ship.stopdesk!=null) SHIP.stopdesk=Number(st.ship.stopdesk)||0; }
+      if(st.homesec) Object.keys(HOMESEC).forEach(k=>{ if(st.homesec[k]!=null) HOMESEC[k]=!!st.homesec[k]; });
+    }
+    let changed=false;
+    if(Array.isArray(pr)){
+      if(pr.length){
+        const localOnly=SERIES.filter(s=>s.k&&!pr.some(x=>x.k===s.k));
+        SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; }).concat(admOK?localOnly:[]);
+        SERIES.forEach(normSeries); changed=true;
+        if(admOK&&localOnly.length) Promise.all(localOnly.map(pushNewSeries)).catch(()=>{});
+      }else if(admOK){ pushAllProducts().catch(()=>{}); }
+    }
+    if(Array.isArray(so)){
+      if(so.length){ SOON=so.map(x=>({name:x.name,a:x.a,b:x.b,style:x.style,img:x.img||''})); changed=true; }
+      else if(admOK) pushSoon().catch(()=>{});
+    }
+    if(Array.isArray(he)){
+      if(he.length){ HERO=he.map(String); changed=true; }
+      else if(admOK) pushHero().catch(()=>{});
+    }
+    if(changed){ try{ persist(); }catch(x){} }
+  }finally{
+    rebuild(); applyLang(); renderFoot(); render();
+  }
+}
+function refreshAll(){ bootDone=true; bootSync().catch(()=>{}); }
 function normSeries(s){
   const hex=c=>/^#[0-9a-f]{6}$/i.test(c)?c:'#5b3b7a';
   s.k=String(s.k); s.name=String(s.name||''); s.type=TYPES.includes(s.type)?s.type:'manga'; s.lang=isGood(s.type)?'':(['en','fr','ar'].includes(s.lang)?s.lang:'fr');
@@ -2293,7 +2353,9 @@ function saveSeries(fm){
     SERIES.unshift(Object.assign({k},data));
   }
   SERIES.forEach(normSeries);
+  const target=key?SERIES.find(x=>x.k===key):SERIES[0];
   if(persist()){ rebuild(); toast(key?'Produit modifié':'Produit ajouté'); go('/admin/products'); }
+  if(target) (key?pushSeries(target):pushNewSeries(target)).catch(syncFail);
 }
 
 /* ---- Promotions ---- */
@@ -2335,6 +2397,7 @@ function saveSoon(fm){
   const o={name,style:g('style'),a:g('ca'),b:g('cb'),img:g('img')}, i=+fm.dataset.i;
   if(i>=0) SOON[i]=o; else SOON.unshift(o);
   persist(); amClose(); render(); toast('Sortie enregistrée');
+  pushSoon().catch(syncFail);
 }
 
 /* ---- Paramètres ---- */
@@ -2379,14 +2442,14 @@ function saveSettings(fm){
   API_BASE=api;
   try{ if(api) localStorage.setItem('tk-api',api); else localStorage.removeItem('tk-api'); }catch(x){}
   ordSynced=false;
-  if(persist()){ applyLang(); renderFoot(); render(); toast('Paramètres enregistrés'); }
+  if(persist()){ applyLang(); renderFoot(); render(); toast('Paramètres enregistrés'); pushSettings({store:{name:STORE.name,whatsapp:STORE.whatsapp,instagram:STORE.instagram},ship:{home:SHIP.home,stopdesk:SHIP.stopdesk}}).catch(syncFail); }
 }
 function saveHero(fm){
   const ids=[];
   for(let i=0;i<7;i++){ const el=fm.elements.namedItem('hero'+i); if(el&&el.value&&byId(el.value)) ids.push(el.value); }
   if(!ids.length){ toast('Choisis au moins un volume'); return; }
   HERO=ids;
-  if(persist()){ render(); toast('Bannière d\u2019accueil mise à jour'); }
+  if(persist()){ render(); toast('Bannière d\u2019accueil mise à jour'); pushHero().catch(syncFail); }
 }
 function savePass(fm){
   const g=n=>String(fm.elements.namedItem(n).value), e=$('#pwf-e');
@@ -2418,6 +2481,7 @@ function importFile(f){
       if(d.ship&&typeof d.ship==='object') Object.assign(SHIP,d.ship);
       if(Array.isArray(d.orders)){ orders=d.orders; saveOrders(); }
       persist(); rebuild(); applyLang(); renderFoot(); render(); toast('Sauvegarde importée');
+      pushStoreAll().catch(syncFail);
     });
   };
   fr.readAsText(f);
@@ -2431,17 +2495,17 @@ document.addEventListener('click',e=>{
   if(a==='logout'){ admOK=false; ordSynced=false; try{ sessionStorage.removeItem('tk-adm'); sessionStorage.removeItem('tk-token'); }catch(x){} go('/'); return; }
   if(a==='am-x'){ amClose(); return; }
   if(a==='am-ok'){ const f=amCb; amClose(); if(f) f(); return; }
-  if(a==='homesec'){ if(k in HOMESEC){ HOMESEC[k]=!HOMESEC[k]; if(persist()){ render(); toast(HOMESEC[k]?'Section affichée':'Section masquée'); } } return; }
-  if(a==='feat'){ const s=SERIES.find(x=>x.k===k); if(s){ s.feat=!s.feat; persist(); $('#atb').innerHTML=prodRows(); toast(s.feat?'Ajoutée aux séries populaires':'Retirée des séries populaires'); } return; }
+  if(a==='homesec'){ if(k in HOMESEC){ HOMESEC[k]=!HOMESEC[k]; if(persist()){ render(); toast(HOMESEC[k]?'Section affichée':'Section masquée'); pushSettings({homesec:{[k]:HOMESEC[k]}}).catch(syncFail); } } return; }
+  if(a==='feat'){ const s=SERIES.find(x=>x.k===k); if(s){ s.feat=!s.feat; persist(); $('#atb').innerHTML=prodRows(); toast(s.feat?'Ajoutée aux séries populaires':'Retirée des séries populaires'); pushSeries(s).catch(syncFail); } return; }
   if(a==='dup'){
     const s=SERIES.find(x=>x.k===k); if(!s) return;
     const c=JSON.parse(JSON.stringify(s)); c.name=s.name+' (copie)'; c.feat=false;
     do{ c.k=(s.k.replace(/[^a-z0-9]/g,'').slice(0,8)||'s')+Math.random().toString(36).slice(2,5); }while(SERIES.some(x=>x.k===c.k));
-    SERIES.unshift(c); persist(); rebuild(); render(); toast('Série dupliquée'); return;
+    SERIES.unshift(c); persist(); rebuild(); render(); toast('Série dupliquée'); pushNewSeries(c).catch(syncFail); return;
   }
   if(a==='del'){
     const s=SERIES.find(x=>x.k===k); if(!s) return;
-    amConfirm('Supprimer cette série ?','\u00ab '+s.name+' \u00bb et ses '+s.vols.length+' volume(s) seront retirés de la boutique.','Supprimer',()=>{ SERIES=SERIES.filter(x=>x.k!==k); delete AD.sel[k]; persist(); rebuild(); render(); toast('Série supprimée'); });
+    amConfirm('Supprimer cette série ?','\u00ab '+s.name+' \u00bb et ses '+s.vols.length+' volume(s) seront retirés de la boutique.','Supprimer',()=>{ SERIES=SERIES.filter(x=>x.k!==k); delete AD.sel[k]; persist(); rebuild(); render(); toast('Série supprimée'); pushDelSeries(k).catch(syncFail); });
     return;
   }
   if(a==='clear-img'){ setImg(b.dataset.fld,''); return; }
@@ -2450,20 +2514,24 @@ document.addEventListener('click',e=>{
     const p=parseInt($('#ppct').value,10), ks=promoKeys();
     if(!(p>=1&&p<=90)){ toast('Entre une réduction entre 1 et 90 %'); return; }
     if(!ks.length){ toast('Coche au moins une série'); return; }
-    SERIES.forEach(s=>{ if(!AD.sel[s.k]) return; const base=s.old||s.price; let np=Math.max(10,Math.round(base*(100-p)/100/10)*10); if(np>=base) np=Math.max(10,base-10); s.old=base; s.price=np; });
-    persist(); rebuild(); render(); toast('Promotion appliquée à '+ks.length+' série(s)'); return;
+    const changed=SERIES.filter(s=>AD.sel[s.k]);
+    changed.forEach(s=>{ const base=s.old||s.price; let np=Math.max(10,Math.round(base*(100-p)/100/10)*10); if(np>=base) np=Math.max(10,base-10); s.old=base; s.price=np; });
+    persist(); rebuild(); render(); toast('Promotion appliquée à '+ks.length+' série(s)');
+    Promise.all(changed.map(pushSeries)).catch(syncFail); return;
   }
   if(a==='promo-clear'){
     const ks=promoKeys(); if(!ks.length){ toast('Coche au moins une série'); return; }
-    SERIES.forEach(s=>{ if(AD.sel[s.k]&&s.old){ s.price=s.old; s.old=0; } });
-    persist(); rebuild(); render(); toast('Promotion retirée'); return;
+    const changed=SERIES.filter(s=>AD.sel[s.k]&&s.old);
+    changed.forEach(s=>{ s.price=s.old; s.old=0; });
+    persist(); rebuild(); render(); toast('Promotion retirée');
+    Promise.all(changed.map(pushSeries)).catch(syncFail); return;
   }
-  if(a==='promo-row'){ const s=SERIES.find(x=>x.k===k); if(s&&s.old){ s.price=s.old; s.old=0; persist(); rebuild(); render(); toast('Promotion retirée'); } return; }
+  if(a==='promo-row'){ const s=SERIES.find(x=>x.k===k); if(s&&s.old){ s.price=s.old; s.old=0; persist(); rebuild(); render(); toast('Promotion retirée'); pushSeries(s).catch(syncFail); } return; }
   if(a==='soon-new'){ soonForm(-1); return; }
   if(a==='soon-edit'){ soonForm(+b.dataset.i); return; }
   if(a==='soon-del'){
     const i=+b.dataset.i, s=SOON[i]; if(!s) return;
-    amConfirm('Supprimer cette sortie ?','\u00ab '+s.name+' \u00bb sera retirée de la section « Bientôt ».','Supprimer',()=>{ SOON.splice(i,1); persist(); render(); toast('Sortie supprimée'); });
+    amConfirm('Supprimer cette sortie ?','\u00ab '+s.name+' \u00bb sera retirée de la section « Bientôt ».','Supprimer',()=>{ SOON.splice(i,1); persist(); render(); toast('Sortie supprimée'); pushSoon().catch(syncFail); });
     return;
   }
   if(a==='ost'){ AD.ost=b.dataset.v; render(); return; }
@@ -2486,6 +2554,7 @@ document.addEventListener('click',e=>{
       SERIES=JSON.parse(JSON.stringify(DEF.series)); SERIES.forEach(normSeries); SOON=JSON.parse(JSON.stringify(DEF.soon));
       Object.assign(STORE,DEF.store); Object.assign(SHIP,DEF.ship); Object.assign(HOMESEC,DEF.homesec); AD.sel={};
       persist(); rebuild(); applyLang(); renderFoot(); render(); toast('Catalogue réinitialisé');
+      pushStoreAll().catch(syncFail);
     });
     return;
   }
@@ -2529,6 +2598,7 @@ document.addEventListener('submit',e=>{
         admOK=true;
         try{ sessionStorage.setItem('tk-adm','1'); }catch(x){}
         render();
+        refreshAll();
       }else{
         $('#lg-e').hidden=false; inp.setAttribute('aria-invalid','true'); inp.focus();
         if(sub) sub.disabled=false;
@@ -2734,8 +2804,9 @@ document.addEventListener('keydown',e=>{
 /* ================= Démarrage ================= */
 applyLang();
 sync();
+refreshAll();
 pushPendingOrders().catch(()=>{});
-window.addEventListener('online',()=>{ pushPendingOrders().catch(()=>{}); });
+window.addEventListener('online',()=>{ pushPendingOrders().catch(()=>{}); refreshAll(); });
 })();
 
 /* ===== Menu burger ===== */
