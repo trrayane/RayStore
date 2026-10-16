@@ -275,7 +275,7 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .foot ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}
 .foot li a{display:inline-flex;align-items:center;min-height:36px;text-decoration:none;font-weight:600;font-size:15px;color:var(--muted);transition:color var(--snap),transform var(--move) var(--spring)}
 .foot li a:hover{color:var(--ink);transform:translateX(4px)}
-.foot .tag{margin-top:14px;color:var(--muted);max-width:19em;font-size:15px}
+.foot .tag{margin-top:14px;color:var(--muted);max-width:19em;font-size:15px;display:block;padding:0;border:0;border-radius:0;background:transparent;font-family:inherit;font-weight:400;white-space:normal;letter-spacing:normal}
 .foot .soc{display:flex;gap:12px;flex-wrap:wrap}
 .foot-b{border-top:1px solid var(--line);padding-top:18px;padding-bottom:26px;color:var(--muted);font-family:var(--mono);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .foot-b a{color:var(--muted);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;min-height:44px;padding:0 4px;transition:color var(--snap)}
@@ -1633,12 +1633,10 @@ async function bootSync(){
     }
     let changed=false;
     if(Array.isArray(pr)){
-      if(pr.length){
-        const localOnly=SERIES.filter(s=>s.k&&!pr.some(x=>x.k===s.k));
-        SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; }).concat(admOK?localOnly:[]);
-        SERIES.forEach(normSeries); changed=true;
-        if(admOK&&localOnly.length) Promise.all(localOnly.map(pushNewSeries)).catch(()=>{});
-      }else if(admOK){ pushAllProducts().catch(()=>{}); }
+      const localOnly=SERIES.filter(s=>s.k&&!pr.some(x=>x.k===s.k));
+      SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; }).concat(admOK&&pr.length?localOnly:[]);
+      SERIES.forEach(normSeries); changed=true;
+      if(admOK&&pr.length&&localOnly.length) Promise.all(localOnly.map(pushNewSeries)).catch(()=>{});
     }
     if(Array.isArray(so)){
       if(so.length){ SOON=so.map(x=>({name:x.name,a:x.a,b:x.b,style:x.style,img:x.img||''})); changed=true; }
@@ -1859,12 +1857,16 @@ function newF(q){
   if(q.genre) f.genre=q.genre.split(',').filter(g=>DEMOS.includes(g)||GENRES.includes(g));
   return f;
 }
+const nrm=s=>String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const qHit=(hay,q)=>{ const ws=nrm(q).split(/\s+/).filter(Boolean); if(!ws.length) return true; const n=nrm(hay); return ws.every(w=>n.includes(w)); };
+const serHay=(s,extra)=>[extra||'',s.name||'',s.author||'',s.short||'',s.desc||'',s.k||'',s.type||'',t('ty_'+s.type),s.lang||'',s.lang?t('lang_'+s.lang):'',(s.genres||[]).join(' '),(s.genres||[]).map(g=>t('g_'+g)).join(' ')].join(' ');
+const itemHay=it=>serHay(it.s,isGood(it.s.type)?itemTitle(it):itemTitle(it)+' \u00b7 tome '+it.vol+' \u00b7 volume '+it.vol);
 function filtered(){
-  const q=F.q.trim().toLowerCase();
+  const q=F.q.trim();
   let l=ITEMS.filter(it=>
     (F.type==='all'||it.s.type===F.type||(F.type==='goods'&&isGood(it.s.type)))&&(F.lang==='all'||it.s.lang===F.lang)&&(F.series==='all'||it.s.k===F.series)
     &&(!F.genre.length||F.genre.some(g=>it.s.genres.includes(g)))&&it.price<=F.max&&(!F.promo||it.old)
-    &&(!q||(it.s.name+' '+(it.s.author||'')).toLowerCase().includes(q)));
+    &&(!q||qHit(itemHay(it),q)));
   if(F.sort==='new') l.sort((a,b)=>b.order-a.order);
   else if(F.sort==='lo') l.sort((a,b)=>a.price-b.price||b.order-a.order);
   else if(F.sort==='hi') l.sort((a,b)=>b.price-a.price||b.order-a.order);
@@ -2234,8 +2236,8 @@ function ordersCSV(){
 
 /* ---- Produits ---- */
 function prodRows(){
-  const q=AD.q.trim().toLowerCase();
-  const l=SERIES.filter(s=>(AD.type==='all'||s.type===AD.type)&&(!q||(s.name+' '+(s.author||'')).toLowerCase().includes(q)));
+  const q=AD.q.trim();
+  const l=SERIES.filter(s=>(AD.type==='all'||s.type===AD.type)&&(!q||qHit(serHay(s),q)));
    if(!l.length) return '<tr><td colspan="9"><p class="a-empty">Aucune série trouvée.</p></td></tr>';
    return l.map(s=>'<tr><td>'+serThumb(s)+'</td><td class="pn"><b>'+esc(s.name)+'</b><br><small class="mut">'+esc(s.author||'—')+'</small></td><td data-l="Type">'+esc(I18N.fr['ty_'+s.type])+'</td><td data-l="Langue">'+esc(I18N.fr['lang_'+s.lang]||'—')+'</td>'
     +'<td data-l="Prix">'+(s.old?'<s>'+fmtA(s.old)+'</s><br>':'')+'<b>'+fmtA(s.price)+'</b></td><td data-l="Volumes">'+s.vols.length+' <small class="mut">('+esc(volsTxt(s.vols))+')</small></td>'
@@ -2779,10 +2781,10 @@ const setInert=v=>['#hdr','#app','#foot','#wa'].forEach(s=>{ $(s).inert=v; });
 function smOpen(){ lastFocus=document.activeElement; sm.hidden=false; setInert(true); smq.value=''; smSel=0; smRender(); smq.focus(); }
 function smClose(){ sm.hidden=true; setInert(false); if(lastFocus&&lastFocus.focus) lastFocus.focus(); }
 function smRender(){
-  const q=smq.value.trim().toLowerCase();
-  smList=ITEMS.filter(it=>!q||(it.s.name+' '+(it.s.short||'')+' '+(it.s.author||'')).toLowerCase().includes(q)).slice(0,8);
+  const q=smq.value.trim();
+  smList=ITEMS.filter(it=>!q||qHit(itemHay(it),q)).slice(0,8);
   if(smSel>=smList.length) smSel=0;
-  $('#smlist').innerHTML=smList.length?smList.map((it,i)=>'<li role="option" id="smo'+i+'" data-i="'+i+'" aria-selected="'+(i===smSel)+'"><span class="th">'+itemCover(it)+'</span><span class="m"><b>'+esc(itemTitle(it))+'</b><small>'+esc(it.s.name)+' \u00b7 '+esc(t('g_'+it.s.genres[0]))+'</small></span><span class="p">'+fmt(it.price)+'</span></li>').join(''):'<li class="sm-none" role="presentation">'+esc(t('sm_none',{q:smq.value.trim()}))+'</li>';
+  $('#smlist').innerHTML=smList.length?smList.map((it,i)=>'<li role="option" id="smo'+i+'" data-i="'+i+'" aria-selected="'+(i===smSel)+'"><span class="th">'+itemCover(it)+'</span><span class="m"><b>'+esc(itemTitle(it))+'</b><small>'+esc(it.s.name)+' \u00b7 '+esc(it.s.genres&&it.s.genres[0]?t('g_'+it.s.genres[0]):t('ty_'+it.s.type))+'</small></span><span class="p">'+fmt(it.price)+'</span></li>').join(''):'<li class="sm-none" role="presentation">'+esc(t('sm_none',{q:smq.value.trim()}))+'</li>';
   smq.setAttribute('aria-activedescendant',smList.length?'smo'+smSel:'');
 }
 function smPick(i){ const it=smList[i]; if(!it) return; smClose(); go('/p/'+it.id); }
