@@ -11,6 +11,7 @@ const settingsRoutes = require('./routes/settings');
 const ordersRoutes = require('./routes/orders');
 const uploadRoutes = require('./routes/upload');
 const exportRoutes = require('./routes/export');
+const { ready: dbReady } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,6 +45,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Erreur serveur' });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Raystore backend lancé sur http://localhost:${PORT}`);
+dbReady.then(() => {
+  if (require.main === module) {
+    app.listen(PORT, () => {
+      console.log(`✅ Raystore backend lancé sur http://localhost:${PORT}`);
+    });
+  }
 });
+
+module.exports = app;

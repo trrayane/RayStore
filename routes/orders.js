@@ -2,6 +2,7 @@ const express = require('express');
 const { query, safeParse, safeStringify } = require('../db');
 const { generateRef, generateId } = require('../utils');
 const { authRequired } = require('../middleware/auth');
+const { notifyNewOrder } = require('../telegram');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ function buildWaUrl({ ref, storeWhatsapp, name, phone, wilaya, addr, shipMethod,
 }
 
 router.get('/', authRequired, async (req, res) => {
-  const result = await query(`SELECT id, ref, name, phone, wilaya, addr, ship_method, ship_cost, sub_total, total, status, notes, wa_url, lines, created_at, updated_at FROM orders ORDER BY created_at DESC`);
+  const result = await query(`SELECT id, ref, name, phone, wilaya, com, addr, ship_method, ship_cost, sub_total, total, status, notes, wa_url, lines, created_at, updated_at FROM orders ORDER BY created_at DESC`);
   res.json(result.rows.map((r) => ({ ...r, ship_cost: Number(r.ship_cost), sub_total: Number(r.sub_total), total: Number(r.total), lines: safeParse(r.lines, []) })));
 });
 
@@ -33,19 +34,40 @@ router.get('/stats', authRequired, async (req, res) => {
 
 router.post('/', async (req, res) => {
   const body = req.body || {};
-  const { name, phone, wilaya, addr, shipMethod, shipCost, subTotal, total, lines, storeWhatsapp } = body;
+  const { name, phone, wilaya, com, addr, shipMethod, shipCost, subTotal, total, lines, notes, storeWhatsapp } = body;
   if (!name || !phone || !wilaya || !shipMethod || !Array.isArray(lines) || !lines.length) return res.status(400).json({ error: 'Données incomplètes' });
   const id = generateId();
   const ref = body.ref || generateRef();
-  const cleanLines = lines.map((l) => ({ id: l.id, title: String(l.title || ''), qty: Math.max(1, Number(l.qty)||1), price: Math.max(0, Number(l.price)||0) }));
+  const existing = await query('SELECT id, ref, wa_url FROM orders WHERE ref=$1', [ref]);
+  if (existing.rows.length) {
+    return res.json({ success: true, id: existing.rows[0].id, ref, wa_url: existing.rows[0].wa_url, duplicate: true });
+  }
+  const cleanLines = lines.map((l) => ({
+    id: l.id,
+    title: String(l.title || ''),
+    qty: Math.max(1, Number(l.qty) || 1),
+    price: Math.max(0, Number(l.price) || 0),
+    img: String(l.img || '').slice(0, 2000000),
+    style: String(l.style || ''),
+    a: String(l.a || ''),
+    b: String(l.b || ''),
+    vol: l.vol == null ? '' : l.vol,
+    short: String(l.short || ''),
+    author: String(l.author || '')
+  }));
   const sc = Math.max(0, Number(shipCost)||0);
   const st = Math.max(0, Number(subTotal)||0);
   const tt = Math.max(0, Number(total)||st+sc);
   const wa = buildWaUrl({ ref, storeWhatsapp, name, phone, wilaya, addr: addr||'', shipMethod, shipCost: sc, subTotal: st, total: tt, lines: cleanLines });
   await query(
-    `INSERT INTO orders (id,ref,name,phone,wilaya,addr,ship_method,ship_cost,sub_total,total,status,wa_url,lines) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'new',$11,$12)`,
-    [id, ref, name, phone, String(wilaya), addr||'', shipMethod, sc, st, tt, wa, safeStringify(cleanLines)]
+    `INSERT INTO orders (id,ref,name,phone,wilaya,com,addr,ship_method,ship_cost,sub_total,total,status,notes,wa_url,lines) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'new',$12,$13,$14)`,
+    [id, ref, name, phone, String(wilaya), String(com||''), addr||'', shipMethod, sc, st, tt, String(notes||''), wa, safeStringify(cleanLines)]
   );
+  notifyNewOrder({
+    ref, name, phone, wilaya: String(wilaya), com: String(com||''), addr: addr||'',
+    notes: String(notes||''), shipMethod, shipCost: sc, subTotal: st, total: tt,
+    lines: cleanLines, created: new Date().toISOString()
+  }).catch((e) => console.error('[telegram] :', e && e.message));
   res.status(201).json({ success: true, id, ref, wa_url: wa });
 });
 

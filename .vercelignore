@@ -4,10 +4,4 @@ uploads/
 *.log
 .git/
 .gitignore
-server.js
-db.js
-utils.js
-routes/
-middleware/
-package.json
-package-lock.json
+.vercel/

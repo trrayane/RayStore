@@ -1581,6 +1581,19 @@ try{
 const t=(k,v)=>{ let s=I18N[lang][k]; if(s==null) s=I18N.fr[k]; if(s==null) s=k; if(v) Object.keys(v).forEach(x=>{s=s.replace('{'+x+'}',v[x]);}); return s; };
 const byId=id=>ITEMS.find(i=>i.id===id);
 let orders=[]; try{ const o=JSON.parse(localStorage.getItem('tk-orders')||'[]'); if(Array.isArray(o)) orders=o; }catch(e){}
+/* ---- API backend : commandes synchronisées + notification Telegram ---- */
+let API_BASE=''; try{ API_BASE=String(localStorage.getItem('tk-api')||'').replace(/\/+$/,''); }catch(x){}
+const apiTok=()=>{ try{ return sessionStorage.getItem('tk-token')||''; }catch(x){ return ''; } };
+function apiHeaders(tok){ const h={'content-type':'application/json'}; if(tok) h.authorization='Bearer '+tok; return h; }
+async function apiReq(path,opt){
+  opt=opt||{};
+  const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),opt.timeout||8000);
+  try{
+    const r=await fetch(API_BASE+path,{method:opt.method||'GET',headers:apiHeaders(opt.auth?apiTok():null),body:opt.body!==undefined?JSON.stringify(opt.body):undefined,signal:ctl.signal});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return await r.json().catch(()=>null);
+  }finally{ clearTimeout(to); }
+}
 function normSeries(s){
   const hex=c=>/^#[0-9a-f]{6}$/i.test(c)?c:'#5b3b7a';
   s.k=String(s.k); s.name=String(s.name||''); s.type=TYPES.includes(s.type)?s.type:'manga'; s.lang=isGood(s.type)?'':(['en','fr','ar'].includes(s.lang)?s.lang:'fr');
@@ -1920,7 +1933,9 @@ function viewCheckout(ok){
    +'</div></section>';
 }
 function setErr(id,msg){ const i=$('#'+(id==='wil'?'f-wil':'f-'+id)),e=$('#e-'+id); if(msg){e.textContent=msg;e.hidden=false;i.setAttribute('aria-invalid','true');}else{e.hidden=true;i.removeAttribute('aria-invalid');} return !msg; }
-function submitOrder(){
+let ordBusy=false;
+async function submitOrder(){
+  if(ordBusy) return;
   const name=$('#f-name').value.trim(), phone=$('#f-phone').value.replace(/[\s.\-()]/g,'').replace(/^(\+213|00213)/,'0'), wil=$('#f-wil').value, com=$('#f-com').value.trim(), addr=$('#f-addr').value.trim(), notes=$('#f-notes').value.trim();
   form.name=name; form.phone=$('#f-phone').value; form.com=com; form.addr=addr;
   const a=setErr('name',name.length<3?t('err_name'):''),
@@ -1931,11 +1946,32 @@ function submitOrder(){
   if(!(a&&b&&c&&d&&e)){ $(!a?'#f-name':!b?'#f-phone':!c?'#f-wil':!d?'#f-com':'#f-addr').focus(); return; }
   try{ if($('#f-rem').checked) localStorage.setItem('tk-form',JSON.stringify({name:form.name,phone:form.phone,wil:wilaya,com:com,addr:form.addr})); else localStorage.removeItem('tk-form'); }catch(x){}
 
-  const ref='CMD-'+Date.now().toString(36).toUpperCase().slice(-6);
-  orders.unshift({id:ref,date:new Date().toISOString(),name,phone,wil:wilName(wil),com,addr,notes,ship:shipM,shipCost:shipCost(),sub:cartSum(),total:cartSum()+shipCost(),status:'new',lines:Object.keys(cart).map(id=>{ const it=byId(id); return {id,title:itemTitle(it),qty:cart[id],price:it.price,img:it.s.img||'',style:it.s.style,a:it.s.a,b:it.s.b,vol:it.vol,short:it.s.short||it.s.name,author:it.s.author||''}; })});
-  saveOrders();
-  cart={}; save(); updateHdr();
+  const ref='CMD-'+Date.now().toString(36).toUpperCase().slice(-6)+Math.random().toString(36).slice(2,4).toUpperCase();
+  const lines=Object.keys(cart).map(id=>{ const it=byId(id); return {id,title:itemTitle(it),qty:cart[id],price:it.price,img:it.s.img||'',style:it.s.style,a:it.s.a,b:it.s.b,vol:it.vol,short:it.s.short||it.s.name,author:it.s.author||''}; });
+  const sub=cartSum(), sc=shipCost(), tot=sub+sc;
+  const order={id:ref,date:new Date().toISOString(),name,phone,wil:wilName(wil),com,addr,notes,ship:shipM,shipCost:sc,sub,total:tot,status:'new',lines};
+  ordBusy=true;
+  const sb=document.querySelector('button[form="order"]'); if(sb) sb.disabled=true;
+  let srv=null;
+  try{
+    srv=await apiReq('/api/orders',{method:'POST',timeout:10000,body:{ref,name,phone,wilaya:order.wil,com,addr,notes,shipMethod:shipM,shipCost:sc,subTotal:sub,total:tot,lines,storeWhatsapp:STORE.whatsapp}});
+  }catch(x){ srv=null; }
+  if(srv&&srv.id) order._srvId=srv.id; else order._pending=true;
+  orders.unshift(order); saveOrders();
+  cart={}; save(); updateHdr(); ordBusy=false;
   $('#app').innerHTML=viewCheckout(true); window.scrollTo(0,0);
+  if(!srv) toast('Commande enregistrée — serveur injoignable, envoi en attente');
+}
+async function pushPendingOrders(){
+  const pend=orders.filter(o=>o._pending&&!o._srvId);
+  if(!pend.length) return;
+  for(const o of pend){
+    try{
+      const r=await apiReq('/api/orders',{method:'POST',timeout:10000,body:{ref:o.id,name:o.name,phone:o.phone,wilaya:o.wil,com:o.com||'',addr:o.addr||'',notes:o.notes||'',shipMethod:o.ship,shipCost:o.shipCost,subTotal:o.sub,total:o.total,lines:o.lines,storeWhatsapp:STORE.whatsapp}});
+      if(r&&r.id){ o._srvId=r.id; o._pending=false; }
+    }catch(x){ break; }
+  }
+  saveOrders();
 }
 
 /* ---- Favoris / Livraison ---- */
@@ -1963,6 +1999,21 @@ function renderFoot(){
 
 /* ================= ADMIN ================= */
 let admOK=false; try{ admOK=sessionStorage.getItem('tk-adm')==='1'; }catch(x){}
+let ordSynced=false;
+function mapSrvOrder(o){
+  return { _srvId:o.id, id:o.ref||o.id, date:o.created_at||o.date, name:o.name, phone:o.phone, wil:o.wilaya, com:o.com||'', addr:o.addr||'', notes:o.notes||'', ship:o.ship_method, shipCost:Number(o.ship_cost)||0, sub:Number(o.sub_total)||0, total:Number(o.total)||0, status:o.status||'new', lines:Array.isArray(o.lines)?o.lines:[] };
+}
+async function syncOrders(){
+  const tok=apiTok(); if(!tok) return;
+  try{
+    const rows=await apiReq('/api/orders',{auth:true});
+    if(!Array.isArray(rows)) return;
+    const mapped=rows.map(mapSrvOrder);
+    const seen={}; mapped.forEach(o=>{ seen[o.id]=1; });
+    orders=mapped.concat(orders.filter(o=>!seen[o.id]&&!o._srvId));
+    saveOrders();
+  }catch(x){}
+}
 const AD={q:'',type:'all',ost:'all',sel:{}};
 const STAT={new:'Nouvelle',confirmed:'Confirmée',shipped:'Expédiée',delivered:'Livrée',cancelled:'Annulée'};
 const fmtA=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f')+'\u00a0DA';
@@ -2301,7 +2352,8 @@ function admSettings(){
    +'<form class="ap" id="stf" novalidate><h2>Boutique et livraison</h2>'
    +fld('st-name','Nom de la boutique','<input id="st-name" name="sname" value="'+esc(STORE.name)+'">')
    +fld('st-wa','Numéro WhatsApp','<input id="st-wa" name="swa" inputmode="numeric" value="'+esc(STORE.whatsapp)+'">','Format international sans « + » (ex : 213550000000). Reçoit les commandes.')
-   +fld('st-ig','Lien Instagram','<input id="st-ig" name="sig" type="url" value="'+esc(STORE.instagram)+'">')
+    +fld('st-ig','Lien Instagram','<input id="st-ig" name="sig" type="url" value="'+esc(STORE.instagram)+'">')
+    +fld('st-api','URL du backend (API)','<input id="st-api" name="sapi" type="url" inputmode="url" placeholder="https://mon-backend.exemple.com" value="'+esc(API_BASE)+'">','Adresse qui reçoit les commandes et envoie la notification Telegram. Laisse vide si la boutique et le backend sont sur le même domaine.')
    +'<div class="fgrid">'+fld('st-home','Livraison à domicile (DA) – base zone Centre','<input id="st-home" name="shome" type="number" min="0" step="50" value="'+SHIP.home+'">')+fld('st-desk','Point relais (DA) – base zone Centre','<input id="st-desk" name="sdesk" type="number" min="0" step="50" value="'+SHIP.stopdesk+'">')+'</div>'
    +'<p class="err" id="stf-e" role="alert" hidden></p><button class="btn" type="submit">Enregistrer</button></form>'
    +'<form class="ap" id="pwf" novalidate><h2>Mot de passe admin</h2>'
@@ -2314,14 +2366,19 @@ function admSettings(){
 function saveSettings(fm){
   const g=n=>String(fm.elements.namedItem(n).value).trim(), e=$('#stf-e');
   const wa=g('swa').replace(/\D/g,''), home=parseInt(g('shome'),10), desk=parseInt(g('sdesk'),10);
+  const api=g('sapi').replace(/\/+$/,'');
   let m='';
   if(g('sname').length<2) m='Le nom de la boutique est obligatoire.';
   else if(wa.length<9||wa.length>15) m='Numéro WhatsApp invalide (9 à 15 chiffres, sans « + »).';
   else if(g('sig')&&!/^https?:\/\//i.test(g('sig'))) m='Le lien Instagram doit commencer par https://';
+  else if(api&&!/^https?:\/\/.+/i.test(api)) m='L\u2019URL du backend doit commencer par http:// ou https://';
   else if(!(home>=0)||!(desk>=0)) m='Les tarifs de livraison doivent être des nombres.';
   if(m){ e.textContent=m; e.hidden=false; return; }
   e.hidden=true;
   STORE.name=g('sname'); STORE.whatsapp=wa; STORE.instagram=g('sig'); SHIP.home=home; SHIP.stopdesk=desk;
+  API_BASE=api;
+  try{ if(api) localStorage.setItem('tk-api',api); else localStorage.removeItem('tk-api'); }catch(x){}
+  ordSynced=false;
   if(persist()){ applyLang(); renderFoot(); render(); toast('Paramètres enregistrés'); }
 }
 function saveHero(fm){
@@ -2338,7 +2395,13 @@ function savePass(fm){
   else if(g('np').length<4) m='Le nouveau mot de passe doit avoir 4 caractères minimum.';
   else if(g('np')!==g('np2')) m='La confirmation ne correspond pas.';
   if(m){ e.textContent=m; e.hidden=false; return; }
-  ADMIN.pass=g('np'); if(persist()){ fm.reset(); e.hidden=true; toast('Mot de passe modifié'); }
+  const cp=g('cp'), np=g('np');
+  ADMIN.pass=np;
+  if(persist()){
+    fm.reset(); e.hidden=true; toast('Mot de passe modifié');
+    apiReq('/api/auth/change-password',{method:'POST',body:{currentPassword:cp,newPassword:np}})
+      .catch(()=>toast('Mot de passe non appliqué sur le backend (injoignable)'));
+  }
 }
 function importFile(f){
   if(!f) return;
@@ -2365,7 +2428,7 @@ document.addEventListener('click',e=>{
   if(e.target.id==='am'){ amClose(); return; }
   const b=e.target.closest('[data-a]'); if(!b) return;
   const a=b.dataset.a, k=b.dataset.k;
-  if(a==='logout'){ admOK=false; try{ sessionStorage.removeItem('tk-adm'); }catch(x){} go('/'); return; }
+  if(a==='logout'){ admOK=false; ordSynced=false; try{ sessionStorage.removeItem('tk-adm'); sessionStorage.removeItem('tk-token'); }catch(x){} go('/'); return; }
   if(a==='am-x'){ amClose(); return; }
   if(a==='am-ok'){ const f=amCb; amClose(); if(f) f(); return; }
   if(a==='homesec'){ if(k in HOMESEC){ HOMESEC[k]=!HOMESEC[k]; if(persist()){ render(); toast(HOMESEC[k]?'Section affichée':'Section masquée'); } } return; }
@@ -2406,8 +2469,11 @@ document.addEventListener('click',e=>{
   if(a==='ost'){ AD.ost=b.dataset.v; render(); return; }
   if(a==='odet'){ const o=orders.find(x=>x.id===b.dataset.id); if(o) ordModal(o); return; }
   if(a==='odel'){
-    const id=b.dataset.id;
-    amConfirm('Supprimer cette commande ?','La commande '+id+' sera supprimée définitivement.','Supprimer',()=>{ orders=orders.filter(x=>x.id!==id); saveOrders(); render(); toast('Commande supprimée'); });
+    const id=b.dataset.id, o=orders.find(x=>x.id===id);
+    amConfirm('Supprimer cette commande ?','La commande '+id+' sera supprimée définitivement.','Supprimer',()=>{
+      orders=orders.filter(x=>x.id!==id); saveOrders(); render(); toast('Commande supprimée');
+      if(o&&o._srvId) apiReq('/api/orders/'+encodeURIComponent(o._srvId),{method:'DELETE',auth:true}).catch(()=>toast('Suppression non synchronisée avec le serveur'));
+    });
     return;
   }
   if(a==='ocsv'){ if(orders.length) download('commandes-'+new Date().toISOString().slice(0,10)+'.csv',ordersCSV(),'text/csv;charset=utf-8'); return; }
@@ -2426,7 +2492,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target;
-  if(el.dataset.aStatus){ const o=orders.find(x=>x.id===el.dataset.aStatus); if(o){ o.status=el.value; saveOrders(); render(); toast('Statut mis à jour'); } return; }
+  if(el.dataset.aStatus){ const o=orders.find(x=>x.id===el.dataset.aStatus); if(o){ o.status=el.value; saveOrders(); render(); toast('Statut mis à jour'); if(o._srvId){ apiReq('/api/orders/'+encodeURIComponent(o._srvId)+'/status',{method:'PATCH',auth:true,body:{status:o.status,notes:o.notes||''}}).catch(()=>toast('Statut non synchronisé avec le serveur')); } } return; }
   if(el.dataset.aSel!==undefined){ AD.sel[el.dataset.aSel]=el.checked; return; }
   if(el.id==='atype'){ AD.type=el.value; $('#atb').innerHTML=prodRows(); return; }
   if(el.dataset.aFile){
@@ -2450,8 +2516,25 @@ document.addEventListener('submit',e=>{
   const f=e.target;
   if(f.id==='lg'){
     e.preventDefault();
-    if($('#lg-p').value===ADMIN.pass){ admOK=true; try{ sessionStorage.setItem('tk-adm','1'); }catch(x){} render(); }
-    else{ $('#lg-e').hidden=false; $('#lg-p').setAttribute('aria-invalid','true'); $('#lg-p').focus(); }
+    const inp=$('#lg-p'), sub=f.querySelector('button[type="submit"]'), pass=inp.value;
+    if(sub) sub.disabled=true;
+    (async()=>{
+      let ok=false;
+      try{
+        const d=await apiReq('/api/auth/login',{method:'POST',body:{password:pass}});
+        if(d&&d.token){ try{ sessionStorage.setItem('tk-token',d.token); }catch(x){} ok=true; }
+      }catch(x){ /* backend injoignable : on retombe sur le mot de passe local */ }
+      if(!ok) ok=(pass===ADMIN.pass);
+      if(ok){
+        admOK=true;
+        try{ sessionStorage.setItem('tk-adm','1'); }catch(x){}
+        render();
+      }else{
+        $('#lg-e').hidden=false; inp.setAttribute('aria-invalid','true'); inp.focus();
+        if(sub) sub.disabled=false;
+      }
+    })();
+    return;
   }
   else if(f.id==='sf'){ e.preventDefault(); saveSeries(f); }
   else if(f.id==='soonf'){ e.preventDefault(); saveSoon(f); }
@@ -2483,7 +2566,10 @@ function render(){
   clearInterval(flipT);
   document.body.classList.toggle('adm',isAd);
   document.title=isAd?'Admin \u2014 '+STORE.name:t('title');
-  if(isAd) html=admView(p);
+  if(isAd){
+    if(!ordSynced){ ordSynced=true; syncOrders().then(()=>{ const q=route.path; if(q==='/admin'||q.indexOf('/admin/')===0) render(); }); }
+    html=admView(p);
+  }
   else if(p==='/catalogue'){ if(!F) F=newF(route.q); html=viewCatalogue(); }
   else if(p==='/cart') html=viewCart();
   else if(p==='/checkout') html=viewCheckout();
@@ -2648,6 +2734,8 @@ document.addEventListener('keydown',e=>{
 /* ================= Démarrage ================= */
 applyLang();
 sync();
+pushPendingOrders().catch(()=>{});
+window.addEventListener('online',()=>{ pushPendingOrders().catch(()=>{}); });
 })();
 
 /* ===== Menu burger ===== */

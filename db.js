@@ -86,6 +86,7 @@ async function initDb() {
       name TEXT NOT NULL,
       phone TEXT NOT NULL,
       wilaya TEXT NOT NULL,
+      com TEXT DEFAULT '',
       addr TEXT,
       ship_method TEXT NOT NULL,
       ship_cost INTEGER NOT NULL,
@@ -136,6 +137,7 @@ async function initDb() {
     END
     $$;
   `);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS com TEXT DEFAULT ''`);
 }
 
 function safeParse(v, fallback) {
@@ -198,8 +200,8 @@ async function initDefaults() {
   }
 }
 
-initDb().then(initDefaults).catch((err) => {
+const ready = initDb().then(initDefaults).catch((err) => {
   console.error('Erreur initialisation DB Neon:', err);
 });
 
-module.exports = { query, pool, getSetting, setSetting, safeParse, safeStringify };
+module.exports = { query, pool, getSetting, setSetting, safeParse, safeStringify, ready };
