@@ -143,6 +143,24 @@ async function initDb() {
   await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_done BOOLEAN DEFAULT FALSE`);
   await query(`ALTER TABLE uploads ADD COLUMN IF NOT EXISTS data BYTEA`);
   await query(`ALTER TABLE series ADD COLUMN IF NOT EXISTS notified_oos BOOLEAN DEFAULT FALSE`);
+  await query(`
+    CREATE TABLE IF NOT EXISTS stock_movements (
+      id BIGSERIAL PRIMARY KEY,
+      k TEXT NOT NULL,
+      name TEXT DEFAULT '',
+      delta INTEGER NOT NULL,
+      stock_after INTEGER NOT NULL,
+      reason TEXT DEFAULT '',
+      ref TEXT DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_k ON stock_movements(k);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at DESC);
+  `);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS carrier TEXT`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking TEXT`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_status TEXT`);
+  await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS label_url TEXT`);
 }
 
 function safeParse(v, fallback) {

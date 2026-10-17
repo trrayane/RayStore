@@ -12,6 +12,7 @@ const settingsRoutes = require('./routes/settings');
 const ordersRoutes = require('./routes/orders');
 const uploadRoutes = require('./routes/upload');
 const exportRoutes = require('./routes/export');
+const stockRoutes = require('./routes/stock');
 const { ready: dbReady, query } = require('./db');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/stock', stockRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
@@ -66,8 +68,29 @@ function seoBlock(o) {
   p.push('<meta name="twitter:card" content="summary_large_image">');
   p.push('<link rel="canonical" href="' + esc(o.url) + '">');
   if (o.noindex) p.push('<meta name="robots" content="noindex">');
-  if (o.ld) p.push('<script type="application/ld+json">' + JSON.stringify(o.ld).replace(/</g, '\\u003c') + '</script>');
+  const lds = Array.isArray(o.ld) ? o.ld : (o.ld ? [o.ld] : []);
+  lds.forEach((x) => p.push('<script type="application/ld+json">' + JSON.stringify(x).replace(/</g, '\\u003c') + '</script>'));
   return '<!--SEO-START-->\n' + p.join('\n') + '\n<!--SEO-END-->';
+}
+
+const TYPE_LABEL = {
+  manga: 'Manga', manhwa: 'Manhwa', novel: 'Roman', comics: 'Comics',
+  figurine: 'Figurine', poster: 'Affiche', apparel: 'Vêtement', accessory: 'Accessoire',
+  cards: 'Cartes', deco: 'Décoration', plush: 'Peluche', mug: 'Mug', sticker: 'Sticker',
+  jewelry: 'Bijou', stationery: 'Papeterie', bag: 'Sac', phonecase: 'Coque de téléphone'
+};
+
+function breadcrumbLd(steps) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: steps.map((s, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: s.name,
+      item: s.item
+    }))
+  };
 }
 
 async function buildSeo(req) {
@@ -115,7 +138,13 @@ async function buildSeo(req) {
       };
       if (img) ld.image = [img];
       if (s.author) ld.author = { '@type': 'Person', name: s.author };
-      return { title: base + ' | RayStore', desc: desc, url: url, img: img, ld: ld, type: 'product' };
+      const bc = breadcrumbLd([
+        { name: 'RayStore', item: PUBLIC + '/' },
+        { name: 'Catalogue', item: PUBLIC + '/catalogue' },
+        { name: TYPE_LABEL[s.type] || 'Catalogue', item: PUBLIC + '/catalogue?type=' + s.type },
+        { name: base, item: url }
+      ]);
+      return { title: base + ' | RayStore', desc: desc, url: url, img: img, ld: [ld, bc], type: 'product' };
     }
   }
   if (req.path === '/admin' || req.path.indexOf('/admin/') === 0) {
@@ -125,7 +154,11 @@ async function buildSeo(req) {
     return Object.assign({}, DEFAULT_SEO, {
       title: 'Catalogue — RayStore',
       desc: 'Parcourez tous les mangas, manhwa, comics et goodies disponibles chez RayStore. Livraison rapide partout en Algérie.',
-      url: url, img: ''
+      url: url, img: '',
+      ld: [DEFAULT_SEO.ld, breadcrumbLd([
+        { name: 'RayStore', item: PUBLIC + '/' },
+        { name: 'Catalogue', item: url }
+      ])]
     });
   }
   if (req.path === '/cart' || req.path === '/checkout' || req.path === '/favorites') {
@@ -136,6 +169,40 @@ async function buildSeo(req) {
   }
   return DEFAULT_SEO;
 }
+
+function xmlEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+app.get('/sitemap.xml', async (req, res, next) => {
+  try {
+    const r = await query('SELECT k, vols, updated_at FROM series WHERE active=TRUE ORDER BY sort_order DESC, k ASC');
+    const today = new Date().toISOString().slice(0, 10);
+    const urls = [
+      { loc: PUBLIC + '/', lastmod: today, changefreq: 'daily', priority: '1.0' },
+      { loc: PUBLIC + '/catalogue', lastmod: today, changefreq: 'daily', priority: '0.9' },
+      { loc: PUBLIC + '/shipping', lastmod: today, changefreq: 'monthly', priority: '0.5' }
+    ];
+    r.rows.forEach((s) => {
+      let vols = [];
+      try { vols = JSON.parse(s.vols || '[]'); } catch (e) { vols = []; }
+      if (!Array.isArray(vols) || !vols.length) vols = [1];
+      const last = s.updated_at ? new Date(s.updated_at).toISOString().slice(0, 10) : today;
+      vols.forEach((v) => {
+        const n = Number(v);
+        if (!n || n < 1) return;
+        urls.push({ loc: PUBLIC + '/p/' + s.k + '-' + n, lastmod: last, changefreq: 'weekly', priority: '0.8' });
+      });
+    });
+    const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+      + urls.map((u) => '  <url><loc>' + xmlEsc(u.loc) + '</loc><lastmod>' + u.lastmod + '</lastmod><changefreq>' + u.changefreq + '</changefreq><priority>' + u.priority + '</priority></url>').join('\n')
+      + '\n</urlset>\n';
+    res.set('Cache-Control', 'public, max-age=3600').type('application/xml').send(xml);
+  } catch (e) {
+    console.error('[sitemap]', e.message);
+    next();
+  }
+});
 
 app.get('*', async (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();

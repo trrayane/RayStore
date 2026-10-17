@@ -4,6 +4,8 @@ const { generateRef, generateId } = require('../utils');
 const { authRequired } = require('../middleware/auth');
 const { notifyNewOrder } = require('../telegram');
 const { checkStockAlerts } = require('../stock_alerts');
+const { logMovement } = require('../stock_journal');
+const carriers = require('../carriers');
 
 const router = express.Router();
 
@@ -35,7 +37,7 @@ function buildWaUrl({ ref, storeWhatsapp, name, phone, wilaya, addr, shipMethod,
 }
 
 router.get('/', authRequired, async (req, res) => {
-  const result = await query(`SELECT id, ref, name, phone, wilaya, com, addr, ship_method, ship_cost, sub_total, total, status, notes, wa_url, lines, created_at, updated_at FROM orders ORDER BY created_at DESC`);
+  const result = await query(`SELECT id, ref, name, phone, wilaya, com, addr, ship_method, ship_cost, sub_total, total, status, notes, wa_url, lines, carrier, tracking, tracking_status, label_url, created_at, updated_at FROM orders ORDER BY created_at DESC`);
   res.json(result.rows.map((r) => ({ ...r, ship_cost: Number(r.ship_cost), sub_total: Number(r.sub_total), total: Number(r.total), lines: safeParse(r.lines, []) })));
 });
 
@@ -51,6 +53,107 @@ router.get('/stats', authRequired, async (req, res) => {
   const todayRow = (await query("SELECT COALESCE(SUM(total),0) as s FROM orders WHERE date(created_at)=date('now') AND status NOT IN ('cancelled','returned')")).rows[0];
   res.json({ total, new: newc, confirmed: conf, shipped: ship, delivered: deliv, cancelled: canc, returned: ret, revenue: Number(revRow.s)||0, today: Number(todayRow.s)||0 });
 });
+
+/* ---- Transporteurs (Yalidine / ZR Express) ---- */
+function orderForParcel(o) {
+  const wil = String(o.wilaya || '');
+  const m = wil.match(/^(\d{1,2})\s*-\s*(.+)$/);
+  const lines = safeParse(o.lines, []);
+  const parts = String(o.name || '').trim().split(/\s+/);
+  const firstname = parts[0] || 'Client';
+  return {
+    ref: String(o.ref || o.id),
+    name: String(o.name || ''),
+    firstname,
+    familyname: parts.slice(1).join(' ') || firstname,
+    phone: String(o.phone || ''),
+    wilCode: m ? Number(m[1]) : 0,
+    wilName: m ? m[2].trim() : wil,
+    com: String(o.com || ''),
+    addr: String(o.addr || ''),
+    stopdesk: String(o.ship_method) === 'stopdesk',
+    total: Number(o.total) || 0,
+    summary: lines.map((l) => l.title + ' ×' + l.qty).join(' | ').slice(0, 250)
+  };
+}
+async function loadParcelOrder(id) {
+  const r = await query('SELECT id, ref, name, phone, wilaya, com, addr, ship_method, total, lines, carrier, tracking, tracking_status, label_url FROM orders WHERE id=$1', [id]);
+  return r.rows.length ? r.rows[0] : null;
+}
+
+router.get('/carriers', authRequired, async (req, res) => {
+  res.json(carriers.available());
+});
+
+router.post('/carriers/test', authRequired, async (req, res) => {
+  try {
+    const r = await carriers.testCarrier(String((req.body || {}).carrier || ''));
+    res.json({ success: true, msg: r.msg });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+router.get('/:id/tracking', authRequired, async (req, res) => {
+  const o = await loadParcelOrder(String(req.params.id || ''));
+  if (!o) return res.status(404).json({ error: 'Commande introuvable' });
+  if (!o.carrier || !o.tracking) return res.status(404).json({ error: 'Aucun colis créé pour cette commande' });
+  try {
+    const t = await carriers.getTracking(o.carrier, o.tracking);
+    await query('UPDATE orders SET tracking_status=$1 WHERE id=$2', [t.status, o.id]);
+    res.json({ success: true, status: t.status, history: t.history || [] });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+router.post('/:id/label', authRequired, async (req, res) => {
+  const o = await loadParcelOrder(String(req.params.id || ''));
+  if (!o) return res.status(404).json({ error: 'Commande introuvable' });
+  if (!o.carrier || !o.tracking) return res.status(404).json({ error: 'Aucun colis créé pour cette commande' });
+  try {
+    const url = await carriers.getLabel(o.carrier, o.tracking, o.label_url);
+    if (!o.label_url) await query('UPDATE orders SET label_url=$1 WHERE id=$2', [url, o.id]);
+    res.json({ success: true, url });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+router.post('/:id/parcel', authRequired, async (req, res) => {
+  const body = req.body || {};
+  const carrier = String(body.carrier || '');
+  if (carrier !== 'yalidine' && carrier !== 'zr') return res.status(400).json({ error: 'Transporteur invalide' });
+  const o = await loadParcelOrder(String(req.params.id || ''));
+  if (!o) return res.status(404).json({ error: 'Commande introuvable' });
+  if (o.tracking) return res.status(409).json({ error: 'Colis déjà créé', tracking: o.tracking });
+  if (!carriers.available()[carrier === 'yalidine' ? 'yalidine' : 'zr']) {
+    return res.status(400).json({ error: (carrier === 'yalidine' ? 'Yalidine' : 'ZR Express') + ' non configuré — ajoute les clés API dans .env puis redéploie.' });
+  }
+  const op = orderForParcel(o);
+  try {
+    if (op.stopdesk && body.stopdeskId === undefined) {
+      const stops = await carriers.listStops(carrier, op);
+      if (stops.length > 1) return res.json({ needStops: true, stops });
+      if (stops.length === 1) return createAndSave(res, carrier, op, { stopdeskId: stops[0].id, hubId: stops[0].id }, o.id);
+      return res.status(422).json({ error: 'Aucun point relais trouvé pour cette wilaya/commune' });
+    }
+    return createAndSave(res, carrier, op, { stopdeskId: body.stopdeskId, hubId: body.stopdeskId }, o.id);
+  } catch (e) {
+    return res.status(502).json({ error: e.message });
+  }
+});
+
+async function createAndSave(res, carrier, op, opts, orderId) {
+  try {
+    const p = await carriers.createParcel(carrier, op, opts);
+    await query('UPDATE orders SET carrier=$1, tracking=$2, tracking_status=$3, label_url=$4 WHERE id=$5',
+      [carrier, p.tracking, p.status || '', p.label || '', orderId]);
+    res.json({ success: true, carrier, tracking: p.tracking, status: p.status || '', label: p.label || '' });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+}
 
 router.post('/', async (req, res) => {
   const body = req.body || {};
@@ -97,7 +200,10 @@ router.post('/', async (req, res) => {
       return res.status(409).json({ error: 'Stock insuffisant ou produit indisponible', items: bad });
     }
     for (const [k, q] of need) {
-      await client.query('UPDATE series SET stock=stock-$1 WHERE k=$2', [q, k]);
+      const up = await client.query('UPDATE series SET stock=stock-$1 WHERE k=$2 RETURNING stock, name', [q, k]);
+      if (up.rows[0]) {
+        await logMovement(client, { k, name: up.rows[0].name, delta: -q, stock_after: up.rows[0].stock, reason: 'Commande', ref });
+      }
     }
     await client.query(
       `INSERT INTO orders (id,ref,name,phone,wilaya,com,addr,ship_method,ship_cost,sub_total,total,status,notes,wa_url,lines,stock_done) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'new',$12,$13,$14,TRUE)`,
@@ -110,12 +216,14 @@ router.post('/', async (req, res) => {
   } finally {
     client.release();
   }
-  notifyNewOrder({
-    ref, name, phone, wilaya: String(wilaya), com: String(com||''), addr: addr||'',
-    notes: String(notes||''), shipMethod, shipCost: sc, subTotal: st, total: tt,
-    lines: cleanLines, created: new Date().toISOString()
-  }).catch((e) => console.error('[telegram] :', e && e.message));
-  await checkStockAlerts([...need.keys()]);
+  await Promise.all([
+    notifyNewOrder({
+      ref, name, phone, wilaya: String(wilaya), com: String(com||''), addr: addr||'',
+      notes: String(notes||''), shipMethod, shipCost: sc, subTotal: st, total: tt,
+      lines: cleanLines, created: new Date().toISOString()
+    }).catch((e) => console.error('[telegram] :', e && e.message)),
+    checkStockAlerts([...need.keys()])
+  ]);
   res.status(201).json({ success: true, id, ref, wa_url: wa });
 });
 
@@ -129,7 +237,7 @@ router.patch('/:id/status', authRequired, async (req, res) => {
   let touched = [];
   try {
     await client.query('BEGIN');
-    const exists = await client.query('SELECT id, status, lines, stock_done FROM orders WHERE id=$1 FOR UPDATE', [id]);
+    const exists = await client.query('SELECT id, ref, status, lines, stock_done FROM orders WHERE id=$1 FOR UPDATE', [id]);
     if (exists.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Commande introuvable' });
@@ -142,13 +250,23 @@ router.patch('/:id/status', authRequired, async (req, res) => {
       const done = row.stock_done === true;
       if (restore && done) {
         for (const [k, q] of aggLines(safeParse(row.lines, []))) {
-          await client.query('UPDATE series SET stock=stock+$1 WHERE k=$2', [q, k]);
+          const up = await client.query('UPDATE series SET stock=stock+$1 WHERE k=$2 RETURNING stock, name', [q, k]);
+          if (up.rows[0]) {
+            await logMovement(client, { k, name: up.rows[0].name, delta: q, stock_after: up.rows[0].stock, reason: status === 'cancelled' ? 'Commande annulée' : 'Commande retournée', ref: row.ref });
+          }
         }
         touched = [...aggLines(safeParse(row.lines, [])).keys()];
         await client.query('UPDATE orders SET stock_done=FALSE WHERE id=$1', [id]);
       } else if (consume && !done) {
         for (const [k, q] of aggLines(safeParse(row.lines, []))) {
+          const before = await client.query('SELECT stock, name FROM series WHERE k=$1 FOR UPDATE', [k]);
+          const oldSt = before.rows.length ? Number(before.rows[0].stock) || 0 : 0;
           await client.query('UPDATE series SET stock=GREATEST(stock-$1,0) WHERE k=$2', [q, k]);
+          const after = await client.query('SELECT stock FROM series WHERE k=$1', [k]);
+          const newSt = after.rows.length ? Number(after.rows[0].stock) || 0 : oldSt;
+          if (before.rows.length) {
+            await logMovement(client, { k, name: before.rows[0].name, delta: newSt - oldSt, stock_after: newSt, reason: 'Commande réactivée', ref: row.ref });
+          }
         }
         touched = [...aggLines(safeParse(row.lines, [])).keys()];
         await client.query('UPDATE orders SET stock_done=TRUE WHERE id=$1', [id]);
@@ -178,7 +296,10 @@ router.delete('/:id', authRequired, async (req, res) => {
     const r = await client.query('SELECT lines, stock_done FROM orders WHERE id=$1 FOR UPDATE', [id]);
     if (r.rows.length && r.rows[0].stock_done === true) {
       for (const [k, q] of aggLines(safeParse(r.rows[0].lines, []))) {
-        await client.query('UPDATE series SET stock=stock+$1 WHERE k=$2', [q, k]);
+        const up = await client.query('UPDATE series SET stock=stock+$1 WHERE k=$2 RETURNING stock, name', [q, k]);
+        if (up.rows[0]) {
+          await logMovement(client, { k, name: up.rows[0].name, delta: q, stock_after: up.rows[0].stock, reason: 'Suppression de commande', ref: id });
+        }
       }
       touched = [...aggLines(safeParse(r.rows[0].lines, [])).keys()];
     }

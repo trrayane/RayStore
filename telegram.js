@@ -1,5 +1,6 @@
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const CHAT = String(process.env.TELEGRAM_CHAT_ID || '').trim();
+const PUBLIC = String(process.env.PUBLIC_URL || '').replace(/\/+$/, '');
 
 const tgUrl = (m) => `https://api.telegram.org/bot${TOKEN}/${m}`;
 const h = (s) => String(s == null ? '' : s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -65,26 +66,41 @@ function chunkText(text, max) {
 async function sendPhoto(l) {
   const raw = `${l.title} \u00d7${l.qty} \u2014 ${fmt(l.price * l.qty)}`.slice(0, 900);
   const caption = h(raw);
-  if (/^https?:\/\//i.test(l.img)) {
-    await call('sendPhoto', { chat_id: CHAT, photo: l.img, caption, parse_mode: 'HTML' });
-    return;
+  let bytes = null, mime = '', ext = 'jpg';
+  const dm = /^data:image\/([a-z+.-]+);base64,([A-Za-z0-9+/=\s]+)$/i.exec(String(l.img || ''));
+  if (dm) {
+    bytes = Buffer.from(dm[2].replace(/\s+/g, ''), 'base64');
+    mime = 'image/' + dm[1];
+    ext = (dm[1] === 'jpeg' ? 'jpg' : dm[1] === 'svg+xml' ? 'svg' : dm[1]).replace(/[^a-z0-9]/gi, '') || 'png';
+  } else {
+    let u = String(l.img || '').trim();
+    if (u && !/^https?:\/\//i.test(u)) {
+      if (u[0] === '/') u = PUBLIC + u;
+      else if (/^p\//.test(u)) u = PUBLIC + '/' + u;
+    }
+    if (!/^https?:\/\//i.test(u)) return;
+    const r = await fetch(u, { redirect: 'follow' });
+    if (!r.ok) throw new Error('image inaccessible (' + r.status + ')');
+    const ct = (r.headers.get('content-type') || '').split(';')[0].trim();
+    if (!/^image\//.test(ct)) throw new Error('type non-image : ' + ct);
+    if (/svg/.test(ct)) throw new Error('SVG non support\u00e9 par Telegram');
+    bytes = Buffer.from(await r.arrayBuffer());
+    mime = ct;
+    ext = ct === 'image/jpeg' ? 'jpg' : ct === 'image/png' ? 'png' : ct === 'image/webp' ? 'webp' : ct === 'image/gif' ? 'gif' : 'jpg';
   }
-  const m = /^data:image\/([a-z+.-]+);base64,([A-Za-z0-9+/=\s]+)$/i.exec(l.img);
-  if (!m) return;
-  const bytes = Buffer.from(m[2].replace(/\s+/g, ''), 'base64');
-  if (!bytes.length || bytes.length > 10 * 1024 * 1024) return;
-  const ext = (m[1] === 'jpeg' ? 'jpg' : m[1] === 'svg+xml' ? 'svg' : m[1]).replace(/[^a-z0-9]/gi, '');
+  if (!bytes || !bytes.length || bytes.length > 10 * 1024 * 1024) return;
   const fd = new FormData();
   fd.append('chat_id', CHAT);
   fd.append('caption', caption);
   fd.append('parse_mode', 'HTML');
-  fd.append('photo', new Blob([bytes], { type: 'image/' + m[1] }), `produit.${ext || 'png'}`);
+  fd.append('photo', new Blob([bytes], { type: mime || 'image/jpeg' }), `produit.${ext}`);
   const res = await fetch(tgUrl('sendPhoto'), { method: 'POST', body: fd });
   let data = null;
   try { data = await res.json(); } catch (e) { /* ignoré */ }
   if (!res.ok || !data || data.ok !== true) {
-    throw new Error(`Telegram sendPhoto (base64) : ${data && data.description ? data.description : 'HTTP ' + res.status}`);
+    throw new Error(`Telegram sendPhoto : ${data && data.description ? data.description : 'HTTP ' + res.status}`);
   }
+  console.log('[telegram] photo envoy\u00e9e : ' + l.title);
 }
 
 async function notifyNewOrder(order) {
@@ -96,10 +112,8 @@ async function notifyNewOrder(order) {
     for (const chunk of chunkText(buildText(order), 3900)) {
       await call('sendMessage', { chat_id: CHAT, text: chunk, parse_mode: 'HTML', disable_web_page_preview: true });
     }
-    for (const l of order.lines || []) {
-      if (!l.img) continue;
-      try { await sendPhoto(l); } catch (e) { console.error('[telegram] photo non envoyée (' + l.title + ') :', e.message); }
-    }
+    const lines = (order.lines || []).filter((l) => l.img);
+    await Promise.all(lines.map((l) => sendPhoto(l).catch((e) => { console.error('[telegram] photo non envoy\u00e9e (' + l.title + ') :', e.message); })));
     return true;
   } catch (err) {
     console.error('[telegram] échec envoi de la commande', order.ref || '', ':', err.message);
