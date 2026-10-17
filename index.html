@@ -587,6 +587,7 @@ fieldset{border:0;margin:0 0 16px;padding:0}
 .bars.rev i{border-radius:8px 8px 4px 4px}
 .cols2{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
 .cols2 .ap{margin:0}
+.cols2 .col{display:flex;flex-direction:column;gap:22px;min-width:0}
 .hbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:10px 0;border-top:1px solid var(--line)}
 .hbar:first-child{border-top:0;padding-top:0}
 .hb-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:14.5px}
@@ -2309,8 +2310,7 @@ function admDash(){
   return '<div class="a-top"><div><h1 class="a-h">Tableau de bord</h1><p class="a-sub">Vue d\u2019ensemble de ta boutique.</p></div><div class="a-acts"><a class="btn sm" href="#/admin/new">'+ICA.plus+'Ajouter un produit</a><a class="btn ghost sm" href="#/admin/orders">Voir les commandes</a></div></div>'
    +'<div class="kpis"><div class="kpi hot"><span>Nouvelles commandes</span><b>'+nn+'</b></div><div class="kpi"><span>Commandes</span><b>'+orders.length+'</b></div><div class="kpi"><span>Chiffre d\u2019affaires</span><b>'+fmtA(rev)+'</b></div><div class="kpi"><span>Séries · volumes</span><b>'+SERIES.length+' · '+SUM_ORD+'</b></div><div class="kpi"><span>Promos actives</span><b>'+pr+'</b></div></div>'
    +'<div class="ap"><h2>Chiffre d\u2019affaires \u00b7 14 jours</h2><div class="bars rev" id="revBars" role="img" aria-label="Chiffre d\u2019affaires par jour sur 14 jours : '+revDay.join(', ')+'">'+revBars+'</div></div>'
-   +'<div class="cols2"><div class="ap"><h2>Top ventes</h2><div id="topProd">'+topHtml+'</div></div><div class="ap"><h2>Statuts des commandes</h2><div id="statDist">'+statHtml+'</div></div></div>'
-   +'<div class="ap"><h2>Dernières commandes</h2>'+(orders.length?ordTable(orders.slice(0,5),false):'<p class="a-empty">Aucune commande pour le moment. Les commandes passées depuis la boutique apparaissent ici.</p>')+'</div>';
+   +'<div class="cols2"><div class="col"><div class="ap"><h2>Top ventes</h2><div id="topProd">'+topHtml+'</div></div><div class="ap"><h2>Dernières commandes</h2>'+(orders.length?ordTable(orders.slice(0,5),false):'<p class="a-empty">Aucune commande pour le moment. Les commandes passées depuis la boutique apparaissent ici.</p>')+'</div></div><div class="ap"><h2>Statuts des commandes</h2><div id="statDist">'+statHtml+'</div></div></div>';
 }
 
 /* ---- Mouvements de stock ---- */
