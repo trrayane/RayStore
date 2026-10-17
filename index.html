@@ -585,7 +585,7 @@ fieldset{border:0;margin:0 0 16px;padding:0}
 .bars small{font-family:var(--mono);font-size:11px;color:var(--muted)}
 .bars.rev span{font-family:var(--mono);font-size:10.5px;white-space:nowrap}
 .bars.rev i{border-radius:8px 8px 4px 4px}
-.cols2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
 .cols2 .ap{margin:0}
 .hbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:10px 0;border-top:1px solid var(--line)}
 .hbar:first-child{border-top:0;padding-top:0}
@@ -1090,11 +1090,7 @@ img,video,svg{max-width:100%}
           transition:opacity var(--snap),transform var(--move) var(--spring)}
 .cs-panel.up{transform-origin:bottom center;transform:translateY(6px) scale(.98)}
 .cs-panel.on{opacity:1;transform:none}
-.cs-list{margin:0;padding:0;list-style:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
-.cs-list::-webkit-scrollbar,.cs-panel::-webkit-scrollbar{width:6px}
-.cs-list::-webkit-scrollbar-track,.cs-panel::-webkit-scrollbar-track{background:transparent}
-.cs-list::-webkit-scrollbar-thumb,.cs-panel::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
-.cs-list::-webkit-scrollbar-button,.cs-panel::-webkit-scrollbar-button{display:none}
+.cs-list{margin:0;padding:0;list-style:none;overflow-y:auto;overscroll-behavior:contain}
 .cs-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:8px 14px;border-radius:12px;
         font-weight:700;font-size:15px;line-height:1.3;color:var(--ink);cursor:pointer;
         transition:background var(--snap),color var(--snap)}
@@ -1699,9 +1695,6 @@ async function bootSync(){
     }
     let changed=false;
     if(Array.isArray(pr)){
-      if(admOK){
-        DEF.series.forEach(def=>{ if(!SERIES.some(x=>x.k===def.k)&&!pr.some(x=>x.k===def.k)) SERIES.push(JSON.parse(JSON.stringify(def))); });
-      }
       const localOnly=SERIES.filter(s=>s.k&&!pr.some(x=>x.k===s.k));
       SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; }).concat(admOK&&pr.length?localOnly:[]);
       SERIES.forEach(normSeries); changed=true;
