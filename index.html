@@ -624,6 +624,10 @@ table.t{width:100%;border-collapse:collapse;min-width:860px}
 .hbar.th-ln .hb-r{grid-column:2/4}
 .t s{color:var(--err);font-size:13px}
 .t small{font-size:12px}
+.tw.ords{width:fit-content;max-width:100%}
+.t.ord{width:auto;min-width:720px}
+.t.ord th,.t.ord td{white-space:nowrap}
+.t.ord td.nl{white-space:normal;min-width:150px}
 .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .cb{width:20px;height:20px;accent-color:var(--mag)}
 .st{display:inline-block;padding:2px 12px;border-radius:999px;font-family:var(--mono);font-size:12px;font-weight:700;color:#0d0b10;white-space:nowrap}
@@ -1278,6 +1282,27 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
   .cards .pa .acts{display:grid;grid-template-columns:repeat(3,minmax(0,auto));gap:8px}
   .cards .pa .btn{width:100%;padding-inline:8px;min-height:44px}
   .cards .rb.s{width:44px;height:44px}
+}
+/* Commandes : tableau -> cartes sur mobile */
+@media (max-width:639px){
+  .tw.ords{overflow:visible;border:0;border-radius:0;background:transparent;box-shadow:none;width:auto}
+  .ords .t,.ords .t tbody{display:block;width:100%;min-width:0}
+  .ords .t thead{display:none}
+  .ords .t tr{display:grid;grid-template-columns:1fr auto;gap:8px 14px;padding:14px;margin-bottom:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r24);box-shadow:var(--e1)}
+  .ords .t td{display:block;min-width:0;padding:0;border:0;white-space:normal!important}
+  .ords .t td:nth-child(1){grid-column:1;grid-row:1}
+  .ords .t td:nth-child(2){grid-column:2;grid-row:1;justify-self:end;color:var(--muted);font-size:13px}
+  .ords .t td:nth-child(3){grid-column:1/-1}
+  .ords .t td:nth-child(4){grid-column:1}
+  .ords .t td:nth-child(5){grid-column:2;justify-self:end}
+  .ords .t td:nth-child(6){grid-column:1/-1}
+  .ords .t td:nth-child(7){grid-column:1/-1}
+  .ords .t td[data-l]::before{content:attr(data-l);display:block;margin-bottom:2px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--muted)}
+  .ords .t td:nth-child(1)::before,.ords .t td:nth-child(2)::before{display:none}
+  .ords .t td:nth-child(6)::before,.ords .t td:nth-child(7)::before{display:none}
+  .ords .sel.sm,.ords .cs.sel.sm{width:100%}
+  .ords .t td:nth-child(7) .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
+  .ords .t td:nth-child(7) .btn{width:100%;min-height:44px;padding-inline:8px}
 }
 
 /* =====================================================================
@@ -2336,8 +2361,8 @@ function admMovements(){
 
 /* ---- Commandes ---- */
 function ordTable(list,full){
-  return '<div class="tw"><table class="t"><thead><tr><th>Réf.</th><th>Date</th><th>Client</th><th>Wilaya</th><th>Total</th><th>Statut</th><th><span class="sr">Actions</span></th></tr></thead><tbody>'
-   +list.map(o=>'<tr><td><b class="mono">'+esc(o.id)+'</b></td><td>'+esc(fdate(o.date))+'</td><td>'+esc(o.name)+'<br><small class="mut">'+esc(o.phone)+'</small></td><td>'+esc(o.wil)+'</td><td><b>'+fmtA(o.total)+'</b></td>'
+  return '<div class="tw ords"><table class="t ord"><thead><tr><th>Réf.</th><th>Date</th><th>Client</th><th>Wilaya</th><th>Total</th><th>Statut</th><th><span class="sr">Actions</span></th></tr></thead><tbody>'
+   +list.map(o=>'<tr><td data-l="Réf."><b class="mono">'+esc(o.id)+'</b></td><td data-l="Date">'+esc(fdate(o.date))+'</td><td class="nl" data-l="Client">'+esc(o.name)+'<br><small class="mut">'+esc(o.phone)+'</small></td><td data-l="Wilaya">'+esc(o.wil)+'</td><td data-l="Total"><b>'+fmtA(o.total)+'</b></td>'
     +'<td>'+(full?'<select class="sel sm" data-a-status="'+esc(o.id)+'" aria-label="Statut de '+esc(o.id)+'">'+Object.keys(STAT).map(k=>'<option value="'+k+'"'+(o.status===k?' selected':'')+'>'+STAT[k]+'</option>').join('')+'</select>':'<span class="st '+esc(o.status)+'">'+esc(STAT[o.status]||o.status)+'</span>')+'</td>'
     +'<td><div class="acts"><button class="btn soft sm" type="button" data-a="odet" data-id="'+esc(o.id)+'">Détails</button>'
     +(full?'<a class="btn soft sm" href="https://wa.me/'+intl(o.phone)+'?text='+encodeURIComponent('Bonjour '+o.name+', concernant votre commande '+o.id)+'" target="_blank" rel="noopener">WhatsApp</a><button class="btn danger sm" type="button" data-a="odel" data-id="'+esc(o.id)+'">Supprimer</button>':'')
