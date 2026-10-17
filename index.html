@@ -1694,8 +1694,7 @@ function pushStoreAll(){
 function refreshStock(rerender){
   return apiReq('/api/products').then(pr=>{
     if(!Array.isArray(pr)) return;
-    const localOnly=admOK&&SERIES.filter(s=>s.k&&!pr.some(x=>x.k===s.k));
-    SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; }).concat(localOnly||[]);
+    SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; });
     SERIES.forEach(normSeries);
     try{ persist(); }catch(x){}
     rebuild();
@@ -1721,10 +1720,8 @@ async function bootSync(){
     }
     let changed=false;
     if(Array.isArray(pr)){
-      const localOnly=SERIES.filter(s=>s.k&&!pr.some(x=>x.k===s.k));
-      SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; }).concat(admOK&&pr.length?localOnly:[]);
+      SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; });
       SERIES.forEach(normSeries); changed=true;
-      if(admOK&&pr.length&&localOnly.length) Promise.all(localOnly.map(pushNewSeries)).catch(()=>{});
     }
     if(Array.isArray(so)){
       if(so.length){ SOON=so.map(x=>({name:x.name,a:x.a,b:x.b,style:x.style,img:x.img||''})); changed=true; }
