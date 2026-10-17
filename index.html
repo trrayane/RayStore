@@ -1763,9 +1763,9 @@ loadData(); rebuild();
 const save=()=>{ try{ localStorage.setItem('tk-cart',JSON.stringify(cart)); localStorage.setItem('tk-favs',JSON.stringify(favs)); localStorage.setItem('tk-wil',wilaya); }catch(e){} };
 const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f')+'\u00a0'+t('cur');
 const serLabel=s=>s.name+(s.type==='manga'?' '+t('lang_'+s.lang):'');
-const itemTitle=it=>isGood(it.s.type)?serLabel(it.s):serLabel(it.s)+' \u2014 '+t(it.s.label||'vol')+' '+it.vol;
+const itemTitle=it=>isGood(it.s.type)?serLabel(it.s):(it.s.name&&/tome/i.test(it.s.name)?it.s.name:serLabel(it.s)+' \u2014 '+t(it.s.label||'vol')+' '+it.vol);
 window.CSIMG=(sel,o)=>{ const it=byId(o.value); return it?itemCover(it):null; };
-const serTag=it=>isGood(it.s.type)?t('ty_'+it.s.type):serLabel(it.s);
+const serTag=it=>isGood(it.s.type)?t('ty_'+it.s.type):(it.s.name&&/tome/i.test(it.s.name)?it.s.name.replace(/\s*[—-]?\s*Tome\s*\d+.*/i,'').trim():serLabel(it.s));
 const cartCount=()=>Object.keys(cart).reduce((a,k)=>a+cart[k],0);
 const cartSum=()=>Object.keys(cart).reduce((a,k)=>a+byId(k).price*cart[k],0);
 /* Livraison par zone : SHIP = tarif de base (zone Centre : Alger, Blida, Boumerdès, Tipaza) + supplément selon la wilaya */
