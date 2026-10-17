@@ -595,6 +595,13 @@ fieldset{border:0;margin:0 0 16px;padding:0}
 .hb-r i{display:block;height:100%;border-radius:99px;background:var(--mag)}
 .mv-up{color:#1a7f37}
 .mv-dn{color:var(--err)}
+.mv-chip{display:inline-block;min-width:52px;text-align:center;padding:3px 10px;border-radius:99px;font-weight:800;font-size:12.5px}
+.mv-chip.up{background:color-mix(in srgb,#1a7f37 14%,transparent);color:#1a7f37}
+.mv-chip.dn{background:color-mix(in srgb,var(--err) 12%,transparent);color:var(--err)}
+.mv-rsn{display:inline-block;padding:3px 10px;border-radius:8px;background:var(--hi);font-size:12px;font-weight:700}
+.mv-prod{display:flex;align-items:center;gap:10px;min-width:0}
+.mv-prod .th{width:36px}
+.mv-prod b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .carr-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 0;border-top:1px solid var(--line)}
 .carr-row:first-child{border-top:0;padding-top:0}
 @media (max-width:900px){.cols2{grid-template-columns:1fr}}
@@ -608,6 +615,12 @@ table.t{width:100%;border-collapse:collapse;min-width:860px}
 .t tr:last-child td{border-bottom:0}
 .t tbody tr:hover td{background:color-mix(in srgb,var(--hi) 60%,transparent)}
 .t .th{width:44px}
+.promo-t .th{width:58px;border-radius:10px}
+.hbar.th-ln{grid-template-columns:40px minmax(0,1fr) auto;gap:5px 12px;align-items:center}
+.hbar.th-ln .th{width:40px;grid-row:1/3;align-self:center}
+.hbar.th-ln .hb-t{grid-column:2}
+.hbar.th-ln .hb-v{grid-column:3}
+.hbar.th-ln .hb-r{grid-column:2/4}
 .t s{color:var(--err);font-size:13px}
 .t small{font-size:12px}
 .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -1093,9 +1106,6 @@ img,video,svg{max-width:100%}
 .cs-opt.img{display:grid;grid-template-columns:34px minmax(0,1fr) 20px;gap:0 12px;align-items:center;padding:7px 14px}
 .cs-opt.img .th{width:34px}
 .cs-opt.img .cs-tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cs-v.img{display:flex;align-items:center;gap:9px}
-.cs-v.img .th{width:24px;flex:none}
-.cs-v.img .cs-tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cs-grp{padding:10px 14px 4px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);list-style:none}
 .cs-sh,.cs-scrim{display:none}
 
@@ -2152,7 +2162,7 @@ async function syncOrders(){
     saveOrders();
   }catch(x){}
 }
-const AD={q:'',type:'all',ost:'all',sel:{}};
+const AD={q:'',type:'all',ost:'all',sel:{},ptype:'all'};
 let CARR=null, CARR_P=null, PX=null, MOV=null, MOV_K='', amO='';
 function ensureCarr(){
   if(CARR) return Promise.resolve(CARR);
@@ -2289,10 +2299,14 @@ function admDash(){
   const mxR=Math.max(1,...revDay);
   const revBars=d14.map((d,i)=>'<div><span title="'+esc(fmtA(revDay[i]))+'">'+(revDay[i]>=1000?Math.round(revDay[i]/100)/10+'\u202fk':String(revDay[i]))+'</span><i style="height:'+Math.max(3,revDay[i]/mxR*100)+'%"></i><small>'+d.getDate()+'</small></div>').join('');
   const agg={};
-  act.forEach(o=>(o.lines||[]).forEach(l=>{ const t=l.title||'?'; if(!agg[t]) agg[t]={q:0,v:0}; agg[t].q+=(+l.qty||0); agg[t].v+=(+l.price||0)*(+l.qty||0); }));
-  const top=Object.keys(agg).map(x=>({t:x,q:agg[x].q,v:agg[x].v})).sort((a,b)=>b.v-a.v).slice(0,5);
+  act.forEach(o=>(o.lines||[]).forEach(l=>{ const t=l.title||'?'; if(!agg[t]) agg[t]={q:0,v:0,l:l}; agg[t].q+=(+l.qty||0); agg[t].v+=(+l.price||0)*(+l.qty||0); }));
+  const top=Object.keys(agg).map(x=>({t:x,q:agg[x].q,v:agg[x].v,l:agg[x].l})).sort((a,b)=>b.v-a.v).slice(0,5);
   const mxT=Math.max(1,...top.map(x=>x.v));
-  const topHtml=top.length?top.map(x=>'<div class="hbar"><span class="hb-t">'+esc(x.t)+'</span><span class="hb-v mono">'+fmtA(x.v)+'</span><div class="hb-r"><i style="width:'+Math.max(2,Math.round(x.v/mxT*100))+'%"></i></div></div>').join(''):'<p class="a-empty">Aucune vente pour le moment.</p>';
+  const topHtml=top.length?top.map(x=>{
+    const it=x.l&&x.l.id?byId(x.l.id):null;
+    const th=it?itemCover(it):(x.l&&(x.l.img||x.l.style)?cover({title:x.l.short||x.l.title,vol:x.l.img?null:x.l.vol,style:x.l.style,a:x.l.a,b:x.l.b,img:x.l.img}):'');
+    return '<div class="hbar th-ln">'+(th?'<span class="th">'+th+'</span>':'')+'<span class="hb-t">'+esc(x.t)+'</span><span class="hb-v mono">'+fmtA(x.v)+'</span><div class="hb-r"><i style="width:'+Math.max(2,Math.round(x.v/mxT*100))+'%"></i></div></div>';
+  }).join(''):'<p class="a-empty">Aucune vente pour le moment.</p>';
   const cntS={}; Object.keys(STAT).forEach(k=>{ cntS[k]=orders.filter(o=>o.status===k).length; });
   const mxS=Math.max(1,...Object.keys(STAT).map(k=>cntS[k]));
   const statHtml=Object.keys(STAT).map(k=>'<div class="hbar"><span class="hb-t">'+STAT[k]+'</span><span class="hb-v mono">'+cntS[k]+'</span><div class="hb-r"><i style="width:'+(cntS[k]?Math.max(2,Math.round(cntS[k]/mxS*100)):0)+'%"></i></div></div>').join('');
@@ -2314,11 +2328,14 @@ function admMovements(){
     return head+'<div class="ap"><p class="a-empty">Chargement…</p></div>';
   }
   if(!MOV.length) return head+'<div class="empty"><h2>Aucun mouvement</h2><p>Les changements de stock (commandes, corrections, import) apparaîtront ici.</p></div>';
+  const inSum=MOV.reduce((a,m)=>a+(Number(m.delta)>0?Number(m.delta):0),0);
+  const outSum=MOV.reduce((a,m)=>a+(Number(m.delta)<0?-Number(m.delta):0),0);
+  const sum='<div class="kpis"><div class="kpi"><span>Mouvements affichés</span><b>'+MOV.length+'</b></div><div class="kpi"><span>Entrées</span><b class="mv-up">+'+inSum+'</b></div><div class="kpi"><span>Sorties</span><b class="mv-dn">-'+outSum+'</b></div></div>';
   const body=MOV.map(m=>{
-    const d=Number(m.delta)||0;
-    return '<tr><td>'+esc(fdate(m.created_at))+'</td><td>'+esc(m.name||m.k)+'</td><td class="mono"><b class="'+(d>0?'mv-up':'mv-dn')+'">'+(d>0?'+':'')+d+'</b></td><td class="mono">'+(Number(m.stock_after)||0)+'</td><td>'+esc(m.reason||'—')+(m.ref?'<br><small class="mut mono">'+esc(m.ref)+'</small>':'')+'</td></tr>';
+    const d=Number(m.delta)||0, s=SERIES.find(x=>x.k===m.k);
+    return '<tr><td>'+esc(fdate(m.created_at))+'</td><td>'+(s?'<span class="mv-prod">'+serThumb(s)+'<b>'+esc(m.name||m.k)+'</b></span>':'<b>'+esc(m.name||m.k)+'</b>')+'</td><td><span class="mv-chip '+(d>0?'up':'dn')+'">'+(d>0?'+':'')+d+'</span></td><td class="mono">'+(Number(m.stock_after)||0)+'</td><td><span class="mv-rsn">'+esc(m.reason||'—')+'</span>'+(m.ref?'<br><small class="mut mono">'+esc(m.ref)+'</small>':'')+'</td></tr>';
   }).join('');
-  return head+'<div class="tw"><table class="t"><thead><tr><th>Date</th><th>Produit</th><th>Δ</th><th>Stock après</th><th>Motif</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+  return head+sum+'<div class="tw"><table class="t"><thead><tr><th>Date</th><th>Produit</th><th>Δ</th><th>Stock après</th><th>Motif</th></tr></thead><tbody>'+body+'</tbody></table></div>';
 }
 
 /* ---- Commandes ---- */
@@ -2505,14 +2522,15 @@ function saveSeries(fm){
 
 /* ---- Promotions ---- */
 function admPromos(){
-  const rows=SERIES.map(s=>{
+  const list=SERIES.filter(s=>AD.ptype==='all'||s.type===AD.ptype);
+  const rows=list.map(s=>{
     const pct=s.old?Math.round((1-s.price/s.old)*100):0;
     return '<tr><td><input type="checkbox" class="cb" data-a-sel="'+esc(s.k)+'"'+(AD.sel[s.k]?' checked':'')+' aria-label="Sélectionner '+esc(s.name)+'"></td><td>'+serThumb(s)+'</td><td><b>'+esc(s.name)+'</b></td><td>'+fmtA(s.old||s.price)+'</td><td><b>'+fmtA(s.price)+'</b></td><td>'+(s.old?'<span class="st confirmed">-'+pct+'%</span>':'<span class="mut">—</span>')+'</td><td>'+(s.old?'<button class="btn soft sm" type="button" data-a="promo-row" data-k="'+esc(s.k)+'">Retirer</button>':'')+'</td></tr>';
   }).join('');
-  return '<div class="a-top"><div><h1 class="a-h">Promotions</h1><p class="a-sub">Applique une réduction à plusieurs séries en une fois.</p></div></div>'
+  return '<div class="a-top"><div><h1 class="a-h">Promotions</h1><p class="a-sub">Applique une réduction à plusieurs séries en une fois.</p></div><div class="a-acts"><select class="sel" data-a="ptype" aria-label="Filtrer par type"><option value="all">Tous les types</option>'+TYPES.map(k=>'<option value="'+k+'"'+(AD.ptype===k?' selected':'')+'>'+esc(I18N.fr['ty_'+k])+'</option>').join('')+'</select></div></div>'
    +'<div class="ap promo-bar"><div class="fld"><label for="ppct">Réduction (%)</label><input id="ppct" type="number" min="1" max="90" value="20" inputmode="numeric"></div>'
    +'<button class="btn" type="button" data-a="promo-apply">Appliquer aux séries cochées</button><button class="btn ghost" type="button" data-a="promo-clear">Retirer la promo des séries cochées</button><button class="btn soft" type="button" data-a="promo-all">Tout cocher / décocher</button></div>'
-   +(SERIES.length?'<div class="tw"><table class="t"><thead><tr><th><span class="sr">Choisir</span></th><th><span class="sr">Couverture</span></th><th>Série</th><th>Prix normal</th><th>Prix actuel</th><th>Réduction</th><th><span class="sr">Actions</span></th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty"><h2>Aucune série</h2><a class="btn" href="#/admin/new">Ajouter un produit</a></div>');
+   +(list.length?'<div class="tw promo-t"><table class="t"><thead><tr><th><span class="sr">Choisir</span></th><th><span class="sr">Couverture</span></th><th>Série</th><th>Prix normal</th><th>Prix actuel</th><th>Réduction</th><th><span class="sr">Actions</span></th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty"><h2>Aucune série de ce type</h2><p>Choisis un autre type ou ajoute des produits.</p></div>');
 }
 function promoKeys(){ return SERIES.filter(s=>AD.sel[s.k]).map(s=>s.k); }
 
@@ -2756,6 +2774,7 @@ document.addEventListener('change',e=>{
   const el=e.target;
   if(el.id&&el.id.indexOf('hero-')===0){ const it=el.value?byId(el.value):null; const row=el.closest('.imgrow'); const box=row&&row.querySelector('.imgprev'); if(box) box.innerHTML=it?itemCover(it):'<span>Aucune</span>'; return; }
   if(el.dataset.a==='movf'){ MOV_K=el.value||''; MOV=null; render(); return; }
+  if(el.dataset.a==='ptype'){ AD.ptype=el.value||'all'; render(); return; }
   if(el.dataset.aStatus){ const o=orders.find(x=>x.id===el.dataset.aStatus); if(o){ o.status=el.value; saveOrders(); render(); toast('Statut mis à jour'); if(o._srvId){ apiReq('/api/orders/'+encodeURIComponent(o._srvId)+'/status',{method:'PATCH',auth:true,body:{status:o.status,notes:o.notes||''}}).catch(()=>toast('Statut non synchronisé avec le serveur')); } } return; }
   if(el.dataset.aSel!==undefined){ AD.sel[el.dataset.aSel]=el.checked; return; }
   if(el.id==='atype'){ AD.type=el.value; $('#atb').innerHTML=prodRows(); return; }
@@ -3100,9 +3119,9 @@ window.addEventListener('online',()=>{ pushPendingOrders().catch(()=>{}); refres
     const api=sel._cs={btn,sel,
       sync(){
         if(!sel.isConnected) return;
-        const o=sel.options[sel.selectedIndex], img=o?csImg(sel,o):null;
-        if(img){ v.classList.add('img'); v.innerHTML='<span class="th" aria-hidden="true">'+img+'</span><span class="cs-tx">'+xesc(o.text)+'</span>'; }
-        else { v.classList.remove('img'); v.textContent=o?o.text:''; }
+        const o=sel.options[sel.selectedIndex];
+        v.classList.remove('img');
+        v.textContent=o?o.text:'';
         v.classList.toggle('ph',!!o&&o.value===''&&sel.options.length>1);
         btn.disabled=sel.disabled;
         const n=nameOf(sel); if(n) btn.setAttribute('aria-label',n+' : '+(o?o.text:'')); else btn.removeAttribute('aria-label');
