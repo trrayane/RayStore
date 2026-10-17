@@ -22,6 +22,7 @@ router.get('/', async (req, res) => {
       novel: !!(await getSetting('homesec_novel')),
       goods: !!(await getSetting('homesec_goods'))
     },
+    collage: JSON.parse(await getSetting('collage') || '[]'),
     hasPasswordHash: !!(await getSetting('admin_password_hash'))
   });
 });
@@ -43,6 +44,10 @@ router.put('/', authRequired, async (req, res) => {
     if (body.homesec.manhwa != null) await setSetting('homesec_manhwa', !!body.homesec.manhwa);
     if (body.homesec.novel != null) await setSetting('homesec_novel', !!body.homesec.novel);
     if (body.homesec.goods != null) await setSetting('homesec_goods', !!body.homesec.goods);
+  }
+  if (Array.isArray(body.collage)) {
+    const clean = body.collage.map(String).filter(Boolean).slice(0, 6);
+    await setSetting('collage', JSON.stringify(clean));
   }
   res.json({ success: true });
 });

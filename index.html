@@ -705,11 +705,18 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .set-grid #herof .imgrow{flex-direction:column;align-items:stretch;gap:8px}
 .set-grid #herof .imgprev{width:100%;max-width:120px;margin-inline:auto}
 .set-grid #herof select{width:100%;flex:none!important}
+.set-grid #colf{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px;align-content:start}
+.set-grid #colf>h2,.set-grid #colf>p,.set-grid #colf>button{grid-column:1/-1}
+.set-grid #colf>button{justify-self:start}
+.set-grid #colf .imgrow{flex-direction:column;align-items:stretch;gap:8px}
+.set-grid #colf .imgprev{width:100%;max-width:100px;margin-inline:auto}
+.set-grid #colf select{width:100%;flex:none!important}
 .set-grid #stf .fgrid .fld{display:flex;flex-direction:column;justify-content:flex-end}
 .set-grid .a-acts .btn{flex:0 0 auto}
 @media (max-width:1100px){
   .set-grid{grid-template-columns:minmax(0,1fr)}
   .set-grid #herof{grid-column:auto;grid-row:auto}
+  .set-grid #colf{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:480px){.set-grid #herof{grid-template-columns:minmax(0,1fr)}}
 /* formulaire produit / sortie : bloc Style + couleurs bien aligné */
@@ -1528,6 +1535,7 @@ let SOON = [
 ];
 // Les 7 volumes affichés en éventail sur l’accueil. Modifiable dans Admin > Paramètres > Bannière d’accueil.
 let HERO = ['aot-1','ds-13','mha-1','op-1','jjk-1','ber-1','csm-1'];
+let COLLAGE = [];
 
 const DEF = { series:JSON.parse(JSON.stringify(SERIES)), soon:JSON.parse(JSON.stringify(SOON)), store:Object.assign({},STORE), ship:Object.assign({},SHIP), hero:HERO.slice(), homesec:Object.assign({},HOMESEC) };
 let ITEMS = [], PMIN = 0, PMAX = 1000, SUM_ORD = 0;
@@ -1694,6 +1702,7 @@ async function bootSync(){
       if(st.store.instagram!=null) STORE.instagram=String(st.store.instagram);
       if(st.ship){ if(st.ship.home!=null) SHIP.home=Number(st.ship.home)||0; if(st.ship.stopdesk!=null) SHIP.stopdesk=Number(st.ship.stopdesk)||0; }
       if(st.homesec) Object.keys(HOMESEC).forEach(k=>{ if(st.homesec[k]!=null) HOMESEC[k]=!!st.homesec[k]; });
+      if(Array.isArray(st.collage)) COLLAGE=st.collage.map(String);
     }
     let changed=false;
     if(Array.isArray(pr)){
@@ -1745,6 +1754,7 @@ function loadData(){
     if(d.store&&typeof d.store==='object') Object.assign(STORE,d.store);
     if(d.ship&&typeof d.ship==='object') Object.assign(SHIP,d.ship);
     if(Array.isArray(d.hero)) HERO=d.hero.map(String);
+    if(Array.isArray(d.collage)) COLLAGE=d.collage.map(String);
     if(typeof d.pass==='string'&&d.pass) ADMIN.pass=d.pass;
   }catch(e){}
 }
@@ -1887,8 +1897,9 @@ function viewHome(){
   const soon=SOON.length?'<section class="sec"><div class="sec-in pad w-lg"><div class="sec-top"><h2 class="sec-h">'+t('sec_soon')+'</h2><a class="lnk" href="#/catalogue?type=manga">'+t('all_manga')+IC.arrow+'</a></div><div class="row four">'
     +SOON.map(s=>'<article class="card soon"><div class="c-img">'+cover({title:s.name,vol:null,style:s.style,a:s.a,b:s.b,img:s.img})+'<span class="pillb y">'+t('soon')+'</span></div><div class="c-body"><h3 class="c-t">'+esc(s.name)+'</h3></div></article>').join('')+'</div></div></section>':'';
   const COL=[[4,-1,-4],[35,4,3],[66,0,-3],[7,50,4],[38,55,-3],[69,51,3]];
-  const gp=pickGoods(2), mp=mkPool(['dn-6','ds-13','op-1','jjk-1','aot-1','sl-1']).slice(0,gp.length?4:6);
-  const cp=gp.length?[mp[0],mp[1],mp[2],gp[0],mp[3],gp[1]||mp[4]].filter(Boolean):mp;
+  let cp;
+  if(COLLAGE.length){ cp=COLLAGE.map(id=>byId(id)).filter(Boolean).slice(0,6); }
+  else { const gp=pickGoods(2); const mp=mkPool(['dn-6','ds-13','op-1','jjk-1','aot-1','sl-1']).slice(0,gp.length?4:6); cp=gp.length?[mp[0],mp[1],mp[2],gp[0],mp[3],gp[1]||mp[4]].filter(Boolean):mp; }
   const collage=cp.length?'<div class="collage" aria-hidden="true">'+cp.map((it,i)=>'<div class="cc" style="left:'+COL[i][0]+'%;top:'+COL[i][1]+'%;--r:'+COL[i][2]+'deg">'+itemCover(it)+'</div>').join('')+'</div>':'';
   const about='<section class="sec"><div class="sec-in pad w-lg"><div class="about"'+(collage?'':' style="grid-template-columns:1fr"')+'>'+collage
     +'<div><h2>'+t('about_1')+'<br>'+t('about_2')+'</h2><p>'+t('about_p1')+'</p><p>'+t('about_p2')+'</p><p class="tagp"><b>'+SUM_ORD+'</b> '+t('st_vol')+'</p>'
@@ -2194,7 +2205,7 @@ const ICA={
 /* ---- Données : sauvegarde / utilitaires ---- */
 function persist(){
   try{
-    localStorage.setItem('tk-data',JSON.stringify({seeded:DEF.series.map(x=>x.k),series:SERIES,soon:SOON,homesec:HOMESEC,hero:HERO,store:{name:STORE.name,whatsapp:STORE.whatsapp,instagram:STORE.instagram},ship:{home:SHIP.home,stopdesk:SHIP.stopdesk},pass:ADMIN.pass}));
+    localStorage.setItem('tk-data',JSON.stringify({seeded:DEF.series.map(x=>x.k),series:SERIES,soon:SOON,homesec:HOMESEC,hero:HERO,collage:COLLAGE,store:{name:STORE.name,whatsapp:STORE.whatsapp,instagram:STORE.instagram},ship:{home:SHIP.home,stopdesk:SHIP.stopdesk},pass:ADMIN.pass}));
     return true;
   }catch(x){ toast('Stockage plein : utilise des images plus petites ou des liens.'); return false; }
 }
@@ -2570,6 +2581,13 @@ function admSettings(){
   return '<div class="a-top"><div><h1 class="a-h">Paramètres</h1><p class="a-sub">Boutique, livraison, sécurité et sauvegarde.</p></div></div><div class="set-grid">'
    +'<form class="ap" id="herof" novalidate><h2>Bannière d\u2019accueil</h2><p class="a-sub" style="margin:0 0 16px">Choisis les 7 volumes affichés en éventail sur la page d\u2019accueil. Pour changer une photo, modifie la « Couverture » du volume choisi dans <a href="#/admin/products">Produits</a>.</p>'
    +heroRows+'<button class="btn" type="submit">Enregistrer</button></form>'
+   +'<form class="ap" id="colf" novalidate><h2>Collage « Fait par des fans »</h2><p class="a-sub" style="margin:0 0 16px">Choisis jusqu\u2019à 6 produits affichés en collage sur la page d\u2019accueil.</p>'
+   +COLLAGE.slice(0,6).concat(Array(6).fill('')).slice(0,6).map((id,i)=>{
+     const cur=byId(id);
+     return '<div class="fld"><label for="col-'+i+'">Image '+(i+1)+'</label><div class="imgrow"><div class="imgprev">'+(cur?itemCover(cur):'<span>Aucune</span>')+'</div>'
+      +'<select id="col-'+i+'" name="col'+i+'" data-csimg style="flex:1;min-width:0"><option value="">— Aucune —</option>'+optsFor(id)+'</select></div></div>';
+   }).join('')
+   +'<button class="btn" type="submit">Enregistrer</button></form>'
    +'<form class="ap" id="stf" novalidate><h2>Boutique et livraison</h2>'
    +fld('st-name','Nom de la boutique','<input id="st-name" name="sname" value="'+esc(STORE.name)+'">')
    +fld('st-wa','Numéro WhatsApp','<input id="st-wa" name="swa" inputmode="numeric" value="'+esc(STORE.whatsapp)+'">','Format international sans « + » (ex : 213550000000). Reçoit les commandes.')
@@ -2617,6 +2635,12 @@ function saveHero(fm){
   if(!ids.length){ toast('Choisis au moins un volume'); return; }
   HERO=ids;
   if(persist()){ render(); toast('Bannière d\u2019accueil mise à jour'); pushHero().catch(syncFail); }
+}
+function saveCollage(fm){
+  const ids=[];
+  for(let i=0;i<6;i++){ const el=fm.elements.namedItem('col'+i); if(el&&el.value&&byId(el.value)) ids.push(el.value); }
+  COLLAGE=ids;
+  if(persist()){ render(); toast('Collage mis à jour'); pushSettings({collage:COLLAGE}).catch(syncFail); }
 }
 function savePass(fm){
   const g=n=>String(fm.elements.namedItem(n).value), e=$('#pwf-e');
@@ -2820,6 +2844,7 @@ document.addEventListener('submit',e=>{
   else if(f.id==='soonf'){ e.preventDefault(); saveSoon(f); }
   else if(f.id==='stf'){ e.preventDefault(); saveSettings(f); }
   else if(f.id==='herof'){ e.preventDefault(); saveHero(f); }
+  else if(f.id==='colf'){ e.preventDefault(); saveCollage(f); }
   else if(f.id==='pwf'){ e.preventDefault(); savePass(f); }
 });
 
