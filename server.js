@@ -38,14 +38,15 @@ app.get('/api/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
 app.use(express.static(path.join(__dirname), { index: 'index.html' }));
 
-const PUBLIC = process.env.PUBLIC_URL || 'https://raystore-black.vercel.app';
+const PUBLIC = process.env.PUBLIC_URL || 'https://raystore.space';
+const OG_IMG = PUBLIC + '/p/og-banner.png?v=4';
 const LANGFR = { fr: 'Français', en: 'Anglais', ar: 'Arabe' };
 const BOOKS = ['manga', 'manhwa', 'novel', 'comics'];
 const DEFAULT_SEO = {
   title: 'raystore — Manga, comics, goodies et plus',
   desc: 'RayStore — mangas, comics et goodies en Algérie. Paiement à la livraison, livraison rapide partout en Algérie.',
   url: PUBLIC + '/',
-  img: PUBLIC + '/p/img09.jpg',
+  img: OG_IMG,
   ld: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'RayStore', url: PUBLIC + '/' }
 };
 let seoCache = null;
