@@ -1738,6 +1738,7 @@ async function bootSync(){
     if(changed){ try{ persist(); }catch(x){} }
   }finally{
     rebuild(); applyLang(); renderFoot(); render();
+    preloadImgs();
   }
 }
 function refreshAll(){ bootDone=true; bootSync().catch(()=>{}); }
@@ -1788,6 +1789,29 @@ function rebuild(){
   if(F&&F.max>PMAX) F.max=PMAX;
 }
 loadData(); rebuild();
+
+/* Préchargement en arrière-plan de toutes les images du catalogue dès l'ouverture du site :
+   le navigateur les met en cache pendant que l'utilisateur regarde la page d'accueil. */
+const _imgQ=[]; const _imgSeen=new Set(); let _imgRun=0;
+function queueImg(u){
+  if(!u||_imgSeen.has(u)) return; _imgSeen.add(u); _imgQ.push(u); pumpImg();
+}
+function pumpImg(){
+  while(_imgRun<3&&_imgQ.length){
+    const u=_imgQ.shift(); _imgRun++;
+    const im=new Image();
+    im.onload=im.onerror=()=>{ _imgRun--; pumpImg(); };
+    im.src=u;
+  }
+}
+function preloadImgs(){
+  try{
+    SERIES.forEach(s=>{ queueImg(s.img); queueImg(s.art); });
+    SOON.forEach(s=>queueImg(s.img));
+  }catch(e){}
+}
+preloadImgs();
+
 const save=()=>{ try{ localStorage.setItem('tk-cart',JSON.stringify(cart)); localStorage.setItem('tk-favs',JSON.stringify(favs)); localStorage.setItem('tk-wil',wilaya); }catch(e){} };
 const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f')+'\u00a0'+t('cur');
 const serLabel=s=>s.name+(s.type==='manga'?' '+t('lang_'+s.lang):'');
@@ -1826,13 +1850,13 @@ const IC={
 
 /* ================= Couvertures ================= */
 function cover(o){
-  if(o.img) return '<div class="cv cv-img"><img src="'+esc(o.img)+'" alt=""></div>';
+  if(o.img) return '<div class="cv cv-img"><img src="'+esc(o.img)+'" alt=""'+(o.pri?' fetchpriority="high"':'')+'></div>';
   if(isGood(o.style)){ const L2=Math.max(...String(o.title).split(/\s+/).map(w=>w.length)), f2=Math.max(9,Math.min(12,60/(0.5*L2))).toFixed(1); return '<div class="cv cv-good" style="--a:'+o.a+';--b:'+o.b+';--fs:'+f2+'cqw" aria-hidden="true"><span class="cv-i">'+(GI[o.style]||'')+'</span><span class="cv-t">'+esc(o.title)+'</span></div>'; }
   const L=Math.max(...String(o.title).split(/\s+/).map(w=>w.length));
   const fs=Math.max(9,Math.min(26,86/(0.44*L))).toFixed(1);
   return '<div class="cv cv-'+o.style+'" style="--a:'+o.a+';--b:'+o.b+';--fs:'+fs+'cqw" aria-hidden="true"><span class="cv-t">'+esc(o.title)+'</span>'+(o.vol!=null?'<span class="cv-v">'+o.vol+'</span>':'')+(o.author?'<span class="cv-x">'+esc(o.author)+'</span>':'')+'</div>';
 }
-const itemCover=it=>cover({title:it.s.short||it.s.name,vol:it.vol,style:it.s.style,a:it.s.a,b:it.s.b,author:it.s.author,img:it.s.img});
+const itemCover=(it,pri)=>cover({title:it.s.short||it.s.name,vol:it.vol,style:it.s.style,a:it.s.a,b:it.s.b,author:it.s.author,img:it.s.img,pri:pri});
 const serCover=(k,v)=>itemCover(byId(k+'-'+v));
 
 /* ================= Cartes ================= */
@@ -1904,7 +1928,7 @@ function viewHome(){
   const a=t('h1_a');
   const fp=mkPool(HERO).slice(0,7);
   const idx=fp.length===7?[0,1,2,3,4,5,6]:CENTER_OUT.slice(0,fp.length);
-  const fan=fp.length?'<div class="fan">'+fp.map((it,i)=>{ const f=SLOTS[idx[i]]; return '<div class="fc" data-slot="'+idx[i]+'" data-id="'+esc(it.id)+'" role="button" tabindex="0" aria-label="'+esc(itemTitle(it))+'" style="--dx:'+f[0]+';--dy:'+f[1]+';--r:'+f[2]+'deg;--z:'+f[3]+'">'+itemCover(it)+'</div>'; }).join('')+'</div>':'';
+   const fan=fp.length?'<div class="fan">'+fp.map((it,i)=>{ const f=SLOTS[idx[i]]; return '<div class="fc" data-slot="'+idx[i]+'" data-id="'+esc(it.id)+'" role="button" tabindex="0" aria-label="'+esc(itemTitle(it))+'" style="--dx:'+f[0]+';--dy:'+f[1]+';--r:'+f[2]+'deg;--z:'+f[3]+'">'+itemCover(it,1)+'</div>'; }).join('')+'</div>':'';
   const hero='<section class="hero"><div class="ghosts" aria-hidden="true">'+GH.map(g=>'<div class="gh" style="left:'+g[0]+'%;width:'+g[2]+'%;height:'+g[3]+'%">'+g[1]+'</div>').join('')+'</div>'
     +'<div class="hero-in pad"><h1 class="hero-h1"><span class="sr">'+esc(t('h1_sr'))+'</span><span aria-hidden="true">'+(a?esc(a)+' ':'')+'<span class="flip" id="flipw">'+esc(t(FLIP_WORDS[0]))+'</span><br>'+esc(t('h1_b'))+'</span></h1>'
     +'<a class="btn" style="margin-top:clamp(16px,2vw,26px)" href="#/catalogue">'+t('hero_cta')+IC.arrow+'</a></div>'+fan+'</section>';

@@ -7,6 +7,10 @@ const { authRequired } = require('../middleware/auth');
 
 const router = express.Router();
 
+/* Cache mémoire des images (évite une requête Postgres à chaque affichage d'image) */
+const memCache = new Map();
+const MEM_MAX = 120; // ~120 images gardées en RAM
+
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -58,11 +62,18 @@ router.get('/img/:id', async (req, res) => {
   try {
     const id = String(req.params.id || '');
     if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(404).json({ error: 'Introuvable' });
-    const r = await query('SELECT mime_type, size, data FROM uploads WHERE id=$1', [id]);
-    if (!r.rows.length || !r.rows[0].data) return res.status(404).json({ error: 'Image introuvable' });
-    const row = r.rows[0];
+    let row = memCache.get(id);
+    if (!row) {
+      const r = await query('SELECT mime_type, size, data FROM uploads WHERE id=$1', [id]);
+      if (!r.rows.length || !r.rows[0].data) return res.status(404).json({ error: 'Image introuvable' });
+      row = r.rows[0];
+      if (memCache.size >= MEM_MAX) {
+        memCache.delete(memCache.keys().next().value);
+      }
+      memCache.set(id, row);
+    }
     res.set('Content-Type', row.mime_type || 'image/jpeg');
-    res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    res.set('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable, stale-while-revalidate=2592000');
     res.send(Buffer.from(row.data));
   } catch (err) {
     console.error('Image GET error:', err);
