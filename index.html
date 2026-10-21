@@ -1738,7 +1738,10 @@ async function bootSync(){
     if(changed){ try{ persist(); }catch(x){} }
   }finally{
     rebuild(); applyLang(); renderFoot(); render();
-    preloadImgs();
+/* Préchargement des couvertures uniquement après chargement complet de la page
+   (idle) : ne se bat plus avec les images visibles à l'ouverture. */
+if('requestIdleCallback' in window) requestIdleCallback(preloadImgs,{timeout:8000});
+else window.addEventListener('load',()=>setTimeout(preloadImgs,3000));
   }
 }
 function refreshAll(){ bootDone=true; bootSync().catch(()=>{}); }
@@ -1851,7 +1854,7 @@ const IC={
 
 /* ================= Couvertures ================= */
 function cover(o){
-  if(o.img) return '<div class="cv cv-img"><img src="'+esc(o.img)+'" alt=""'+(o.pri?' fetchpriority="high"':'')+'></div>';
+  if(o.img) return '<div class="cv cv-img"><img src="'+esc(o.img)+'" alt=""'+(o.pri?' fetchpriority="high"':' loading="lazy" decoding="async"')+'></div>';
   if(isGood(o.style)){ const L2=Math.max(...String(o.title).split(/\s+/).map(w=>w.length)), f2=Math.max(9,Math.min(12,60/(0.5*L2))).toFixed(1); return '<div class="cv cv-good" style="--a:'+o.a+';--b:'+o.b+';--fs:'+f2+'cqw" aria-hidden="true"><span class="cv-i">'+(GI[o.style]||'')+'</span><span class="cv-t">'+esc(o.title)+'</span></div>'; }
   const L=Math.max(...String(o.title).split(/\s+/).map(w=>w.length));
   const fs=Math.max(9,Math.min(26,86/(0.44*L))).toFixed(1);
