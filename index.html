@@ -1556,7 +1556,7 @@ let HERO = ['aot-1','ds-13','mha-1','op-1','jjk-1','ber-1','csm-1'];
 let COLLAGE = [];
 
 const DEF = { series:JSON.parse(JSON.stringify(SERIES)), soon:JSON.parse(JSON.stringify(SOON)), store:Object.assign({},STORE), ship:Object.assign({},SHIP), hero:HERO.slice(), homesec:Object.assign({},HOMESEC) };
-let ITEMS = [], PMIN = 0, PMAX = 1000, SUM_ORD = 0;
+let ITEMS = [], PMIN = 0, PMAX = 1000, SUM_ORD = 0, MORE_CACHE = {};
 
 /* ================= Traductions ================= */
 const I18N = {
@@ -1780,6 +1780,7 @@ function loadData(){
 function rebuild(){
   SERIES.forEach(normSeries);
   ITEMS=[];
+  MORE_CACHE={};
   SERIES.forEach(s=>s.vols.forEach(v=>ITEMS.push({id:s.k+'-'+v,s,vol:v,price:s.price,old:s.old||0})));
   ITEMS.forEach((it,i)=>{ it.order=ITEMS.length-i; });
   const ps=ITEMS.map(i=>i.price); PMIN=ps.length?Math.min(...ps):0; PMAX=ps.length?Math.max(...ps):1000; if(PMAX<=PMIN) PMAX=PMIN+100;
@@ -2039,9 +2040,13 @@ function syncCat(){
 function viewProduct(id){
   const it=byId(id); if(!it) return viewHome();
   const shuf=a=>a.slice().sort(()=>Math.random()-0.5), ok=x=>+x.s.stock>0;
-  let more=shuf(ITEMS.filter(x=>x.s===it.s&&x!==it&&ok(x))).slice(0,4);
-  if(more.length<4) more=more.concat(shuf(ITEMS.filter(x=>x!==it&&x.s!==it.s&&ok(x)))).slice(0,4);
-  if(more.length<4) more=more.concat(shuf(ITEMS.filter(x=>x!==it&&!ok(x)))).slice(0,4);
+  let more=MORE_CACHE[it.id];
+  if(!more){
+    more=shuf(ITEMS.filter(x=>x.s===it.s&&x!==it&&ok(x))).slice(0,4);
+    if(more.length<4) more=more.concat(shuf(ITEMS.filter(x=>x!==it&&x.s!==it.s&&ok(x)))).slice(0,4);
+    if(more.length<4) more=more.concat(shuf(ITEMS.filter(x=>x!==it&&!ok(x)))).slice(0,4);
+    MORE_CACHE[it.id]=more;
+  }
   const fav=favs.includes(it.id), gl=it.s.genres.map(g=>t('g_'+g)).join(', ');
   const stock=Math.max(0,+it.s.stock||0), oos=stock<=0;
   const max=oos?1:stock;
