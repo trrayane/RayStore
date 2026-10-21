@@ -1987,10 +1987,11 @@ function filtered(){
     (F.type==='all'||it.s.type===F.type||(F.type==='goods'&&isGood(it.s.type)))&&(F.lang==='all'||it.s.lang===F.lang)&&(F.series==='all'||it.s.k===F.series)
     &&(!F.genre.length||F.genre.some(g=>it.s.genres.includes(g)))&&it.price<=F.max&&(!F.promo||it.old)
     &&(!q||qHit(itemHay(it),q)));
-  if(F.sort==='new') l.sort((a,b)=>b.order-a.order);
-  else if(F.sort==='lo') l.sort((a,b)=>a.price-b.price||b.order-a.order);
-  else if(F.sort==='hi') l.sort((a,b)=>b.price-a.price||b.order-a.order);
-  else l.sort((a,b)=>itemTitle(a).localeCompare(itemTitle(b)));
+  const inStock=it=>+it.s.stock>0?1:0;
+  if(F.sort==='new') l.sort((a,b)=>inStock(b)-inStock(a)||b.order-a.order);
+  else if(F.sort==='lo') l.sort((a,b)=>inStock(b)-inStock(a)||a.price-b.price||b.order-a.order);
+  else if(F.sort==='hi') l.sort((a,b)=>inStock(b)-inStock(a)||b.price-a.price||b.order-a.order);
+  else l.sort((a,b)=>inStock(b)-inStock(a)||itemTitle(a).localeCompare(itemTitle(b)));
   return l;
 }
 const chip=(k,v,label)=>'<button type="button" class="chip" data-f="'+k+'" data-v="'+v+'" aria-pressed="false">'+esc(label)+'</button>';
