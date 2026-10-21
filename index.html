@@ -2038,9 +2038,11 @@ function syncCat(){
 /* ---- Produit ---- */
 function viewProduct(id){
   const it=byId(id); if(!it) return viewHome();
-  const same=ITEMS.filter(x=>x.s===it.s&&x!==it), rest=ITEMS.filter(x=>x.s.type===it.s.type&&x.s!==it.s);
-  const more=same.concat(rest).slice(0,4), fav=favs.includes(it.id);
-  const gl=it.s.genres.map(g=>t('g_'+g)).join(', ');
+  const shuf=a=>a.slice().sort(()=>Math.random()-0.5), ok=x=>+x.s.stock>0;
+  let more=shuf(ITEMS.filter(x=>x.s===it.s&&x!==it&&ok(x))).slice(0,4);
+  if(more.length<4) more=more.concat(shuf(ITEMS.filter(x=>x!==it&&x.s!==it.s&&ok(x)))).slice(0,4);
+  if(more.length<4) more=more.concat(shuf(ITEMS.filter(x=>x!==it&&!ok(x)))).slice(0,4);
+  const fav=favs.includes(it.id), gl=it.s.genres.map(g=>t('g_'+g)).join(', ');
   const stock=Math.max(0,+it.s.stock||0), oos=stock<=0;
   const max=oos?1:stock;
   const stockLine=oos?esc(t('oos')):esc(t('stock_msg',{n:stock}));
