@@ -6,6 +6,7 @@ const { notifyNewOrder } = require('../telegram');
 const { checkStockAlerts } = require('../stock_alerts');
 const { logMovement } = require('../stock_journal');
 const carriers = require('../carriers');
+const { rateLimit } = require('../middleware/ratelimit');
 
 const router = express.Router();
 
@@ -155,7 +156,7 @@ async function createAndSave(res, carrier, op, opts, orderId) {
   }
 }
 
-router.post('/', async (req, res) => {
+router.post('/', rateLimit({ windowMs: 10 * 60 * 1000, max: 5, scale: 'cmd' }), async (req, res) => {
   const body = req.body || {};
   const { name, phone, wilaya, com, addr, shipMethod, shipCost, subTotal, total, lines, notes, storeWhatsapp } = body;
   if (!name || !phone || !wilaya || !shipMethod || !Array.isArray(lines) || !lines.length) return res.status(400).json({ error: 'Données incomplètes' });

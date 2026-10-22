@@ -9,9 +9,8 @@ router.post('/login', async (req, res) => {
   const { password } = req.body || {};
   if (!password) return res.status(400).json({ error: 'Mot de passe requis' });
   let hash = await getSetting('admin_password_hash');
-  const plainDefault = await getSetting('admin_password_plain') || '1234';
   if (!hash) {
-    hash = await bcrypt.hash(String(plainDefault), 10);
+    hash = await bcrypt.hash(String(process.env.ADMIN_PASSWORD || '1234'), 10);
     await setSetting('admin_password_hash', hash);
   }
   const ok = await bcrypt.compare(String(password), hash);
@@ -27,15 +26,13 @@ router.post('/change-password', async (req, res) => {
   if (String(newPassword).length < 4) return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 4 caractères' });
   let hash = await getSetting('admin_password_hash');
   if (!hash) {
-    const plainDefault = await getSetting('admin_password_plain') || '1234';
-    hash = await bcrypt.hash(String(plainDefault), 10);
+    hash = await bcrypt.hash(String(process.env.ADMIN_PASSWORD || '1234'), 10);
     await setSetting('admin_password_hash', hash);
   }
   const ok = await bcrypt.compare(String(currentPassword), hash);
   if (!ok) return res.status(401).json({ error: 'Mot de passe actuel incorrect' });
   const newHash = await bcrypt.hash(String(newPassword), 10);
   await setSetting('admin_password_hash', newHash);
-  await setSetting('admin_password_plain', String(newPassword));
   res.json({ success: true });
 });
 

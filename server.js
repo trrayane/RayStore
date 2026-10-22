@@ -13,6 +13,7 @@ const ordersRoutes = require('./routes/orders');
 const uploadRoutes = require('./routes/upload');
 const exportRoutes = require('./routes/export');
 const stockRoutes = require('./routes/stock');
+const { rateLimit } = require('./middleware/ratelimit');
 const { ready: dbReady, query } = require('./db');
 
 const app = express();
@@ -24,7 +25,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', rateLimit({ windowMs: 10 * 60 * 1000, max: 8, scale: 'auth' }), authRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/soon', soonRoutes);
 app.use('/api/hero', heroRoutes);

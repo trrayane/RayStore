@@ -193,8 +193,7 @@ const defaults = {
   homesec_novel: 1,
   homesec_goods: 1,
   admin_password_hash: null,
-  jwt_secret: process.env.JWT_SECRET || 'raystore-super-secret-change-this',
-  admin_password_plain: process.env.ADMIN_PASSWORD || '1234'
+  jwt_secret: process.env.JWT_SECRET || 'raystore-super-secret-change-this'
 };
 
 async function getSetting(key, fallback = null) {
