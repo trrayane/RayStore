@@ -1123,6 +1123,7 @@ img,video,svg{max-width:100%}
 .cs-opt .ck svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .cs-opt.img{display:grid;grid-template-columns:34px minmax(0,1fr) 20px;gap:0 12px;align-items:center;padding:7px 14px}
 .cs-opt.img .th{width:34px}
+#netwarn{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9999;background:#c0392b;color:#fff;padding:10px 18px;border-radius:12px;font-weight:700;font-size:13px;box-shadow:var(--e2);cursor:pointer;text-align:center;max-width:92vw}
 .cs-opt.img .cs-tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cs-grp{padding:10px 14px 4px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);list-style:none}
 .cs-srch{padding:4px 4px 8px}
@@ -1739,7 +1740,11 @@ async function bootSync(){
       if(he.length){ HERO=he.map(String); changed=true; }
       else if(admOK) pushHero().catch(()=>{});
     }
+    netWarn(false);
     if(changed){ try{ persist(); }catch(x){} }
+  }catch(x){
+    /* Serveur injoignable : on garde les données locales mais on le dit clairement. */
+    netWarn(true);
   }finally{
     rebuild(); applyLang(); renderFoot();
     if(changed) render();
@@ -1757,6 +1762,15 @@ document.addEventListener('visibilitychange',()=>{
   refreshAll();
 });
 function refreshAll(){ bootDone=true; bootSync().catch(()=>{}); }
+function netWarn(on){
+  let b=document.getElementById('netwarn');
+  if(on&&!b){
+    b=document.createElement('div'); b.id='netwarn'; b.setAttribute('role','alert');
+    b.innerHTML='\u26a0\ufe0f Connexion au serveur impossible \u2014 donn\u00e9es locales (appuie pour r\u00e9essayer)';
+    b.addEventListener('click',()=>{ refreshAll(); });
+    document.body.appendChild(b);
+  } else if(!on&&b) b.remove();
+}
 function normSeries(s){
   const hex=c=>/^#[0-9a-f]{6}$/i.test(c)?c:'#5b3b7a';
   s.k=String(s.k); s.name=String(s.name||''); s.type=TYPES.includes(s.type)?s.type:'manga'; s.lang=isGood(s.type)?'':(['en','fr','ar'].includes(s.lang)?s.lang:'fr');
