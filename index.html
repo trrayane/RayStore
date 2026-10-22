@@ -1724,8 +1724,12 @@ async function bootSync(){
     }
     let changed=false;
     if(Array.isArray(pr)){
-      SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; });
-      SERIES.forEach(normSeries); changed=true;
+      const next=JSON.stringify(pr);
+      const cur=SERIES.length?JSON.stringify(SERIES):'';
+      if(next!==cur){
+        SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; });
+        SERIES.forEach(normSeries); changed=true;
+      }
     }
     if(Array.isArray(so)){
       if(so.length){ SOON=so.map(x=>({name:x.name,a:x.a,b:x.b,style:x.style,img:x.img||''})); changed=true; }
@@ -1737,13 +1741,21 @@ async function bootSync(){
     }
     if(changed){ try{ persist(); }catch(x){} }
   }finally{
-    rebuild(); applyLang(); renderFoot(); render();
-/* Préchargement des couvertures uniquement après chargement complet de la page
-   (idle) : ne se bat plus avec les images visibles à l'ouverture. */
-if('requestIdleCallback' in window) requestIdleCallback(preloadImgs,{timeout:8000});
-else window.addEventListener('load',()=>setTimeout(preloadImgs,3000));
+    rebuild(); applyLang(); renderFoot();
+    if(changed) render();
+    /* Préchargement des couvertures uniquement après chargement complet de la page
+       (idle) : ne se bat plus avec les images visibles à l'ouverture. */
+    if('requestIdleCallback' in window) requestIdleCallback(preloadImgs,{timeout:8000});
+    else window.addEventListener('load',()=>setTimeout(preloadImgs,3000));
   }
 }
+let _lastSync=0;
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible') return;
+  if(Date.now()-_lastSync<30000) return;
+  _lastSync=Date.now();
+  refreshAll();
+});
 function refreshAll(){ bootDone=true; bootSync().catch(()=>{}); }
 function normSeries(s){
   const hex=c=>/^#[0-9a-f]{6}$/i.test(c)?c:'#5b3b7a';
