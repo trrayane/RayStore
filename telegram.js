@@ -66,7 +66,7 @@ function chunkText(text, max) {
 async function sendPhoto(l) {
   const raw = `${l.title} \u00d7${l.qty} \u2014 ${fmt(l.price * l.qty)}`.slice(0, 900);
   const caption = h(raw);
-  let bytes = null, mime = '', ext = 'jpg';
+  let bytes = null, mime = '', ext = 'jpg', url = '';
   const dm = /^data:image\/([a-z+.-]+);base64,([A-Za-z0-9+/=\s]+)$/i.exec(String(l.img || ''));
   if (dm) {
     bytes = Buffer.from(dm[2].replace(/\s+/g, ''), 'base64');
@@ -79,24 +79,22 @@ async function sendPhoto(l) {
       else if (/^p\//.test(u)) u = PUBLIC + '/' + u;
     }
     if (!/^https?:\/\//i.test(u)) return;
-    const r = await fetch(u, { redirect: 'follow' });
-    if (!r.ok) throw new Error('image inaccessible (' + r.status + ')');
-    const ct = (r.headers.get('content-type') || '').split(';')[0].trim();
-    if (!/^image\//.test(ct)) throw new Error('type non-image : ' + ct);
-    if (/svg/.test(ct)) throw new Error('SVG non support\u00e9 par Telegram');
-    bytes = Buffer.from(await r.arrayBuffer());
-    mime = ct;
-    ext = ct === 'image/jpeg' ? 'jpg' : ct === 'image/png' ? 'png' : ct === 'image/webp' ? 'webp' : ct === 'image/gif' ? 'gif' : 'jpg';
+    // Direct URL: Telegram uploads the image itself (no second round trip on our side)
+    url = u;
   }
-  if (!bytes || !bytes.length || bytes.length > 10 * 1024 * 1024) return;
   const fd = new FormData();
   fd.append('chat_id', CHAT);
   fd.append('caption', caption);
   fd.append('parse_mode', 'HTML');
-  fd.append('photo', new Blob([bytes], { type: mime || 'image/jpeg' }), `produit.${ext}`);
+  if (url) {
+    fd.append('photo', url);
+  } else {
+    if (!bytes || !bytes.length || bytes.length > 10 * 1024 * 1024) return;
+    fd.append('photo', new Blob([bytes], { type: mime || 'image/jpeg' }), `produit.${ext}`);
+  }
   const res = await fetch(tgUrl('sendPhoto'), { method: 'POST', body: fd });
   let data = null;
-  try { data = await res.json(); } catch (e) { /* ignoré */ }
+  try { data = await res.json(); } catch (e) { /* ignored */ }
   if (!res.ok || !data || data.ok !== true) {
     throw new Error(`Telegram sendPhoto : ${data && data.description ? data.description : 'HTTP ' + res.status}`);
   }

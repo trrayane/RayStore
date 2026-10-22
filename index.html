@@ -1772,16 +1772,9 @@ function loadData(){
   try{
     const d=JSON.parse(localStorage.getItem('tk-data')||'null'); if(!d) return;
     if(Array.isArray(d.series)){
+      /* Source de vérité = le serveur. On ne réinjecte plus les exemples du code :
+         tous les utilisateurs voient exactement le catalogue servi par l'API. */
       SERIES=d.series;
-      /* Les produits d'exemple ajoutés au code après la dernière sauvegarde sont réinjectés
-         (sinon l'ancienne sauvegarde du navigateur les écrase : c'est ce qui faisait disparaître les goodies).
-         Une série d'exemple supprimée volontairement par l'admin ne revient pas. */
-      const seeded=Array.isArray(d.seeded)?d.seeded:null;
-      DEF.series.forEach(def=>{
-        if(SERIES.some(x=>x.k===def.k)) return;
-        if(seeded?seeded.includes(def.k):!isGood(def.type)) return;
-        SERIES.push(JSON.parse(JSON.stringify(def)));
-      });
     }
     if(Array.isArray(d.soon)) SOON=d.soon;
     if(d.homesec&&typeof d.homesec==='object') Object.assign(HOMESEC,d.homesec);
