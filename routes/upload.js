@@ -62,7 +62,9 @@ router.get('/img/:id', async (req, res) => {
   try {
     const id = String(req.params.id || '');
     if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(404).json({ error: 'Introuvable' });
-    let row = memCache.get(id);
+    /* ?v=N dans l'URL : l'image a été remplacée côté base, on contourne le cache RAM */
+    const forced = req.query.v != null && String(req.query.v) !== '';
+    let row = forced ? null : memCache.get(id);
     if (!row) {
       const r = await query('SELECT mime_type, size, data FROM uploads WHERE id=$1', [id]);
       if (!r.rows.length || !r.rows[0].data) return res.status(404).json({ error: 'Image introuvable' });
