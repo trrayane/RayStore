@@ -1820,7 +1820,7 @@ function queueImg(u){
   if(!u||_imgSeen.has(u)) return; _imgSeen.add(u); _imgQ.push(u); pumpImg();
 }
 function pumpImg(){
-  while(_imgRun<3&&_imgQ.length){
+  while(_imgRun<6&&_imgQ.length){
     const u=_imgQ.shift(); _imgRun++;
     const im=new Image();
     im.onload=im.onerror=()=>{ _imgRun--; pumpImg(); };
