@@ -1,4 +1,5 @@
-/* Préchauffe le cache CDN chaque image du catalogue pour servirées en HIT dès la première visite. */
+/* Préchauffe le cache CDN : télécharge une fois chaque image du catalogue pour qu'elles
+   soient servies en HIT dès la première visite. Les URLs exactes de prod sont utilisées. */
 (async () => {
   const res = await fetch('https://raystore.space/api/products');
   const list = await res.json();
@@ -7,8 +8,8 @@
     if (s.img && /^https?:/.test(s.img)) urls.add(s.img);
     if (s.art && /^https?:/.test(s.art)) urls.add(s.art);
   }
-  const bust = Date.now();
-  const jobs = [...urls].map(u => u + (u.includes('?') ? '&' : '?') + 'warm=' + bust);
+  const jobs = [...urls];
+  console.log(jobs.length + ' images à préchauffer');
   let i = 0, ok = 0, fail = 0;
   const t0 = Date.now();
   async function worker() {
