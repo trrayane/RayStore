@@ -1643,7 +1643,7 @@ ar:{
 const $ = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let lang='fr', cart={}, favs=[], wilaya='16', shipM='home', route={path:'/',q:{},raw:'/'}, curRaw=null, forcedRaw=null, F=null, lastFocus=null, flipT=null, VCACHE={};
+let lang='fr', cart={}, favs=[], wilaya='16', shipM='home', route={path:'/',q:{},raw:'/'}, curRaw=null, forcedRaw=null, F=null, lastFocus=null, flipT=null;
 const form={name:'',phone:'',addr:'',com:''};
 try{ const sv=JSON.parse(localStorage.getItem('tk-form')||'null'); if(sv&&typeof sv==='object'){ form.name=sv.name||''; form.phone=sv.phone||''; form.addr=sv.addr||''; form.com=sv.com||''; if(sv.wil) wilaya=String(sv.wil); } }catch(x){}
 const hasSavedForm=()=>{ try{ return !!localStorage.getItem('tk-form'); }catch(x){ return false; } };
@@ -1784,7 +1784,6 @@ function rebuild(){
   SERIES.forEach(normSeries);
   ITEMS=[];
   MORE_CACHE={};
-  VCACHE={};
   SERIES.forEach(s=>s.vols.forEach(v=>ITEMS.push({id:s.k+'-'+v,s,vol:v,price:s.price,old:s.old||0})));
   ITEMS.forEach((it,i)=>{ it.order=ITEMS.length-i; });
   const ps=ITEMS.map(i=>i.price); PMIN=ps.length?Math.min(...ps):0; PMAX=ps.length?Math.max(...ps):1000; if(PMAX<=PMIN) PMAX=PMIN+100;
@@ -2928,23 +2927,9 @@ function sync(){
     if(location.hash||cur!==r.raw) history.replaceState(null,'',r.raw);
   }catch(e){}
   if(r.raw===curRaw) return;
-  if(curRaw!==null&&VCACHE[curRaw]) VCACHE[curRaw].y=window.scrollY||0;
   curRaw=r.raw; route=r;
   if(r.path==='/catalogue') F=newF(r.q);
-  const isAdV=r.path==='/admin'||r.path.indexOf('/admin/')===0;
-  const cacheable=r.path==='/'||r.path==='/catalogue'||r.path.indexOf('/p/')===0;
-  const saved=isAdV?null:(cacheable?VCACHE[r.raw]:null);
-  if(saved&&saved.html){
-    $('#app').innerHTML=saved.html;
-    if(r.path==='/catalogue') syncCat();
-    sfPreview(); renderFoot(); updateHdr();
-    if(r.path==='/') startFlip();
-    applySeo();
-    window.scrollTo(0,saved.y||0);
-  } else {
-    render();
-    window.scrollTo(0,0);
-  }
+  render(); window.scrollTo(0,0);
   const app=$('#app'); if(app&&app.focus) app.focus({preventScroll:true});
 }
 function go(raw){ forcedRaw=raw; try{ location.hash='#'+raw; }catch(e){} sync(); }
@@ -2997,7 +2982,6 @@ function render(){
   if(home) startFlip();
   if(isAd){ const l=$('#lg-p'); if(l) l.focus(); }
   applySeo();
-  if(!isAd&&(p==='/'||p==='/catalogue'||p.indexOf('/p/')===0)) VCACHE[route.raw]={html:$('#app').innerHTML,y:0};
 }
 function updateHdr(){
   const n=cartCount(), b=$('#cartN'); b.hidden=n===0; b.textContent=n;
