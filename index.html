@@ -72,15 +72,19 @@ button{cursor:pointer}
 h1,h2,h3,h4,p{margin:0}
 :focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 #app:focus,#app:focus-visible{outline:0}
+main#app{padding-top:calc(env(safe-area-inset-top,0px) + 92px)}
+.adm main#app{padding-top:0}
+@media (max-width:639px){main#app{padding-top:calc(env(safe-area-inset-top,0px) + 78px)}}
+@media (max-height:480px) and (orientation:landscape){main#app{padding-top:12px}}
 .sr{position:absolute;width:1px!important;height:1px!important;padding:0!important;border:0!important;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .pad{padding-left:max(var(--pad),env(safe-area-inset-left,0px));padding-right:max(var(--pad),env(safe-area-inset-right,0px))}
 .w-xl{max-width:1500px;margin-inline:auto}
 .w-lg{max-width:1230px;margin-inline:auto}
 svg{display:block}
 
-/* ===== Header ===== */
-.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.hdr-in{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 20px;padding-top:14px;padding-bottom:14px}
+/* ===== Header (navbar flottante) ===== */
+.hdr{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));inset-inline:0;z-index:40;margin-inline:auto;width:min(1500px,calc(100% - 24px));background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:22px;box-shadow:var(--e3)}
+.hdr-in{max-width:1500px;margin-inline:auto;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 20px;padding-top:10px;padding-bottom:10px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);align-self:stretch}
 .logo svg{width:24px;height:28px;color:var(--pri)}
 .logo img{width:48px;height:48px;object-fit:contain;display:block;filter:var(--art-filter)}
@@ -343,13 +347,18 @@ html[dir="rtl"] .fdrawer{left:auto;right:0;border-inline-end:0;border-inline-sta
 .achip svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;flex:none}
 .achip:hover{background:var(--mag);border-color:var(--mag)}
 .achip:active{transform:scale(.94)}
-.rng{position:relative;padding-top:32px;direction:ltr}
-.rng input{width:100%;-webkit-appearance:none;appearance:none;background:transparent;height:26px;margin:0}
-.rng input::-webkit-slider-runnable-track{height:6px;background:linear-gradient(to right,var(--pri) var(--rngp,0%),var(--line) var(--rngp,0%));border-radius:3px}
-.rng input::-moz-range-track{height:6px;background:linear-gradient(to right,var(--pri) var(--rngp,0%),var(--line) var(--rngp,0%));border-radius:3px}
-.rng input::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;border-radius:50%;background:var(--pri);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--pri),var(--e2)}
-.rng input::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--pri);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--pri)}
-.rng-tag{position:absolute;top:0;transform:translateX(-50%);background:var(--mag);color:#fff;border-radius:999px;padding:2px 12px;font-family:var(--mono);font-size:12px;font-weight:700;box-shadow:var(--e1);white-space:nowrap}
+.rng2{position:relative;direction:ltr;margin-top:2px}
+.rng-vals{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}
+.rngb{background:var(--hi);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-family:var(--mono);font-size:12.5px;font-weight:700;white-space:nowrap}
+.rngb.max{background:var(--pri);border-color:var(--pri);color:#fff}
+.rng-tra{position:relative;height:6px;border-radius:3px;background:var(--line);margin:6px 0 2px;pointer-events:none}
+.rng-fill{position:absolute;top:0;bottom:0;left:0;right:0;background:var(--pri);border-radius:3px}
+.rng-rng{position:relative;height:26px;margin-top:-6px}
+.rng-rng input{position:absolute;left:0;top:0;width:100%;height:26px;margin:0;-webkit-appearance:none;appearance:none;background:none;pointer-events:none}
+.rng-rng input::-webkit-slider-runnable-track{background:transparent;height:26px}
+.rng-rng input::-moz-range-track{background:transparent}
+.rng-rng input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:22px;height:22px;border-radius:50%;background:var(--pri);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--pri),var(--e2);cursor:pointer}
+.rng-rng input::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:var(--pri);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--pri);cursor:pointer}
 .rng-lim{display:flex;justify-content:space-between;color:var(--muted);font-family:var(--mono);font-size:12px;margin-top:2px}
 .sw-row{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .sw-row h3{font-size:14px;font-weight:800;margin:0 0 2px}
@@ -929,7 +938,7 @@ img,video,svg{max-width:100%}
 
 /* paysage téléphone : bandeau moins haut */
 @media (max-height:480px) and (orientation:landscape){
-  .hdr{position:static}
+  .hdr{position:static;width:auto;margin:0;border-radius:0;border-inline:0;border-top:0;box-shadow:none}
   .wa{width:46px;height:46px}
 }
 
@@ -1996,7 +2005,7 @@ function startFlip(){
 
 /* ---- Catalogue ---- */
 function newF(q){
-  const f={genre:[],lang:'all',type:'all',series:'all',max:PMAX,promo:false,sort:'new',q:'',page:1,turl:''};
+  const f={genre:[],lang:'all',type:'all',series:'all',min:PMIN,max:PMAX,promo:false,sort:'new',q:'',page:1,turl:''};
   if(q.type&&(TYPES.includes(q.type)||q.type==='goods')){ f.type=q.type; f.turl=q.type; }
   if(q.promo==='1') f.promo=true;
   if(q.genre) f.genre=q.genre.split(',').filter(g=>DEMOS.includes(g)||GENRES.includes(g));
@@ -2010,7 +2019,7 @@ function filtered(){
   const q=F.q.trim();
   let l=ITEMS.filter(it=>
     (F.type==='all'||it.s.type===F.type||(F.type==='goods'&&isGood(it.s.type)))&&(F.lang==='all'||it.s.lang===F.lang)&&(F.series==='all'||it.s.k===F.series)
-    &&(!F.genre.length||F.genre.some(g=>it.s.genres.includes(g)))&&it.price<=F.max&&(!F.promo||it.old)
+    &&(!F.genre.length||F.genre.some(g=>it.s.genres.includes(g)))&&it.price<=F.max&&it.price>=F.min&&(!F.promo||it.old)
     &&(!q||qHit(itemHay(it),q)));
   const inStock=it=>+it.s.stock>0?1:0;
   if(F.sort==='new') l.sort((a,b)=>inStock(b)-inStock(a)||b.order-a.order);
@@ -2041,7 +2050,7 @@ function viewCatalogue(){
      +acc('fs-l',true,t('language'),'', '<div class="chips">'+chip('lang','all',t('all'))+['en','fr','ar'].map(l=>chip('lang',l,t('lang_'+l))).join('')+'</div>')
      +acc('fs-t',true,t('type'),'', '<div class="chips">'+chip('type','all',t('all'))+BOOKS.map(k=>chip('type',k,t('ty_'+k))).join('')+'</div><div class="chips">'+chip('type','goods',t('ty_goods'))+GOODS.map(k=>chip('type',k,t('ty_'+k))).join('')+'</div>')
      +acc('fs-s',false,t('series'),'', '<select class="sel" style="width:100%" id="cseries" aria-label="'+t('series')+'">'+serOpts+'</select>')
-     +acc('fs-p',false,t('price'),'', '<div class="rng"><span class="rng-tag" id="rtag"></span><input type="range" id="crange" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.max+'" aria-label="'+t('up_to')+'"><div class="rng-lim"><span>'+fmt(PMIN)+'</span><span>'+fmt(PMAX)+'</span></div></div>')
+     +acc('fs-p',false,t('price'),'', '<div class="rng2"><div class="rng-vals"><span class="rngb" id="rmin"></span><span class="rngb max" id="rmax"></span></div><div class="rng-tra"><div class="rng-fill" id="rfill"></div></div><div class="rng-rng"><input type="range" id="cr2min" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.min+'" aria-label="'+t('price')+' min"><input type="range" id="crange" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.max+'" aria-label="'+t('up_to')+'"></div><div class="rng-lim"><span>'+fmt(PMIN)+'</span><span>'+fmt(PMAX)+'</span></div></div>')
      +'<div class="fs"><div class="fs-b pd-t"><div class="sw-row"><div><h3>'+t('promo_only')+'</h3><p>'+t('promo_desc')+'</p></div><button class="sw" type="button" role="switch" data-f="promo" data-v="1" aria-checked="false" aria-label="'+t('promo_only')+'"></button></div></div></div>'
     +'</div>'
     +'<div class="fd-f"><button class="btn soft" type="button" id="freset">'+t('reset')+'</button><button class="btn" type="button" id="fapply">'+t('f_apply')+'<b class="fapply-n" id="fapplyn"></b></button></div>'
@@ -2054,6 +2063,7 @@ function activeChips(){
   if(F.type!=='all'&&F.type!==F.turl) a.push({k:'type',v:F.type,l:t('ty_'+F.type)});
   if(F.series!=='all'){ const s=SERIES.find(x=>x.k===F.series); a.push({k:'series',v:F.series,l:s?s.name:F.series}); }
   if(F.promo) a.push({k:'promo',v:'1',l:t('promo_only')});
+  if(F.min>PMIN) a.push({k:'min',v:String(F.min),l:t('price')+' min : '+fmt(F.min)});
   if(F.max<PMAX) a.push({k:'max',v:String(F.max),l:t('up_to')+' '+fmt(F.max)});
   return a;
 }
@@ -2070,9 +2080,13 @@ function syncCat(){
   });
   $('#cgrid').innerHTML=shown.length?shown.map(card).join(''):'<div class="empty" style="grid-column:1/-1"><h2>'+t('no_res')+'</h2><button class="btn ghost" type="button" id="creset2">'+t('reset')+'</button></div>';
   $('#cmoreW').hidden=shown.length>=list.length;
-  const pct=(F.max-PMIN)/(PMAX-PMIN), tag=$('#rtag');
-  tag.textContent=fmt(F.max); tag.style.left='calc('+(pct*100)+'% + '+(11-22*pct)+'px)';
-  const r=$('#crange'); r.value=F.max; r.style.setProperty('--rngp',(pct*100).toFixed(1)+'%');
+  const rmin=$('#cr2min'), rmax=$('#crange'), rf=$('#rfill'), v1=$('#rmin'), v2=$('#rmax');
+  if(rmin&&rmax&&rf&&v1&&v2){
+    rmin.value=F.min; rmax.value=F.max;
+    const p1=((F.min-PMIN)/(PMAX-PMIN))*100, p2=((F.max-PMIN)/(PMAX-PMIN))*100;
+    rf.style.left=p1+'%'; rf.style.right=(100-p2)+'%';
+    v1.textContent=fmt(F.min); v2.textContent=fmt(F.max);
+  }
   const ab=$('#abar'), ac=activeChips();
   if(ab) ab.innerHTML=ac.length?ac.map(c=>'<button class="achip" type="button" data-ak="'+esc(c.k)+'" data-av="'+esc(c.v)+'" aria-label="'+esc(t('reset').toLowerCase()+' : '+c.l)+'">'+esc(c.l)+IC.x+'</button>').join('')+'<button class="lnk" type="button" id="aclear">'+t('reset')+'</button>':'';
   const f1=$('#fcount'), f2=$('#ftcount'), fn=$('#fapplyn');
@@ -3121,6 +3135,7 @@ app.addEventListener('click',e=>{
     if(k==='genre') F.genre=F.genre.filter(x=>x!==v);
     else if(k==='promo') F.promo=false;
     else if(k==='max') F.max=PMAX;
+    else if(k==='min') F.min=PMIN;
     else F[k]='all';
     F.page=1; return syncCat();
   }
@@ -3133,7 +3148,8 @@ app.addEventListener('click',e=>{
 });
 app.addEventListener('input',e=>{
   if(e.target.id==='cq'){ F.q=e.target.value; F.page=1; syncCat(); }
-  else if(e.target.id==='crange'){ F.max=+e.target.value; F.page=1; syncCat(); }
+  else if(e.target.id==='crange'){ F.max=+e.target.value; if(F.min>F.max-100) F.min=Math.max(PMIN,F.max-100); F.page=1; syncCat(); }
+  else if(e.target.id==='cr2min'){ F.min=+e.target.value; if(F.max<F.min+100) F.max=Math.min(PMAX,F.min+100); F.page=1; syncCat(); }
 });
 app.addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('fc')){ e.preventDefault(); fanTurn(e.target); }
