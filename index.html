@@ -296,13 +296,23 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .cat-head p{font-size:clamp(16px,1.6vw,19px);color:var(--muted)}
 .cat-head p b{font-family:var(--mono);font-weight:700;color:var(--ink);font-size:.85em}
 .sel{height:46px;border:1.5px solid var(--line);border-radius:var(--r16);background:var(--hi);padding:0 14px;font-weight:700;max-width:100%;transition:border-color var(--snap),box-shadow var(--snap)}
-.cat-body{display:grid;grid-template-columns:min(380px,30%) 1fr;gap:34px;margin-top:0;align-items:start}
-.filters{position:sticky;top:calc(env(safe-area-inset-top,0px) + 100px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r24);box-shadow:var(--e2);overflow:hidden}
-.f-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 20px}
+.cat-body{display:block;margin-top:0}
+.fdrawer{position:fixed;top:0;inset-inline-end:0;bottom:0;inline-size:min(370px,92vw);background:var(--surface);border-inline-start:1px solid var(--line);box-shadow:var(--e4);z-index:76;display:flex;flex-direction:column;transform:translateX(103%);transition:transform .35s cubic-bezier(.32,.72,.35,1);overscroll-behavior:contain}
+html[dir="rtl"] .fdrawer{transform:translateX(-103%);border-inline-start:0;border-inline-end:1px solid var(--line)}
+.fdrawer.open{transform:translateX(0)}
+.f-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);flex:none}
 .f-top h2{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:800;font-size:17px;line-height:1.2;letter-spacing:-.01em;margin:0}
+.f-top .fcx{width:38px;height:38px;border:0;background:var(--hi);display:grid;place-items:center;border-radius:50%;flex:none;transition:transform var(--move) var(--spring),background var(--snap)}
+.f-top .fcx:hover{background:var(--hst);transform:rotate(90deg)}
+.f-top .fcx svg{width:16px;height:16px;fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round}
 .fbadge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:999px;background:var(--pri);color:#fff;font-family:var(--mono);font-weight:700;font-size:11px;padding:0 6px}
 .fbadge[hidden]{display:none}
-.f-top .chip{min-height:34px;font-size:13px;padding:2px 13px}
+.fd-b{flex:1 1 auto;overflow-y:auto;padding:0 0 24px}
+.fd-f{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px;border-top:1px solid var(--line);background:var(--surface)}
+.fd-f .btn{width:100%}
+.fback{position:fixed;inset:0;background:rgba(13,11,16,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);z-index:75;opacity:0;pointer-events:none;transition:opacity var(--snap)}
+.fback.open{opacity:1;pointer-events:auto}
+.flock{overflow:hidden}
 .fs{border-top:1px solid var(--line)}
 .fs summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:15px 20px;cursor:pointer;list-style:none;user-select:none}
 .fs summary::-webkit-details-marker{display:none}
@@ -344,22 +354,17 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .sw::after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--ink);transition:transform var(--move) var(--spring),background var(--snap)}
 .sw[aria-checked="true"]{background:var(--pri);border-color:var(--pri)}
 .sw[aria-checked="true"]::after{transform:translateX(22px);background:#fff}
-.cat-tools{display:flex;gap:12px;margin-bottom:26px}
+.cat-tools{display:flex;gap:12px;margin-bottom:26px;align-items:center}
+.cat-tools .sel{flex:none;width:auto;max-width:200px}
 .sbar{position:relative;flex:1;min-width:0}
 .sbar svg{position:absolute;inset-inline-start:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;pointer-events:none}
 .sbar input{width:100%;height:50px;border:1.5px solid var(--line);border-radius:999px;background:var(--hi);padding-inline:46px 16px;transition:border-color var(--snap),box-shadow var(--snap)}
-.ftoggle{display:none}
+.ftoggle{display:inline-flex}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:28px 22px}
 .more{display:flex;justify-content:center;margin-top:38px}
 .more[hidden]{display:none}
 @media (max-width:1279px){.grid{grid-template-columns:repeat(3,1fr)}}
-@media (max-width:1023px){
-  .cat-body{grid-template-columns:1fr}
-  .filters{position:static;display:none}
-  .filters.open{display:block}
-  .ftoggle{display:inline-flex;min-height:50px;padding:0 20px}
-}
-@media (max-width:639px){.grid{grid-template-columns:repeat(2,1fr);gap:20px 14px}.c-t{font-size:14.5px}.card{padding:8px}.c-body{padding:12px 6px 4px}.c-pr b{font-size:14px}}
+@media (max-width:639px){.grid{grid-template-columns:repeat(2,1fr);gap:20px 14px}.c-t{font-size:14.5px}.card{padding:8px}.c-body{padding:12px 6px 4px}.c-pr b{font-size:14px}.cat-tools{gap:8px;flex-wrap:wrap}.cat-tools .sel{max-width:none;flex:1 1 100%;order:3}}
 
 /* ===== Formulaires ===== */
 .fld{margin-bottom:16px}
@@ -838,7 +843,6 @@ img,video,svg{max-width:100%}
   .cat-tools{gap:8px;margin-bottom:20px}
   .ftoggle{min-height:50px;padding:0 16px;flex:none}
   .sbar input{height:50px}
-  .filters{border-radius:24px}
   .f-top{padding:14px 16px}
   .fs summary{padding:13px 16px}
   .fs-b{padding:0 16px 14px}
@@ -1586,7 +1590,7 @@ fr:{
   cat_pill:'Volumes officiels', cat_pill_g:'Goodies officiels', cat_title:'Catalogue', cat_sub:'Trouve tes volumes officiels importés', cat_sub_g:'Trouve tes goodies préférés, importés et livrés chez toi', found:'trouvés',
   sort_new:'Plus récents', sort_lo:'Prix croissant', sort_hi:'Prix décroissant', sort_az:'A → Z', sort_aria:'Trier',
   filters:'Filtres', refine:'Affiner la sélection', reset:'Réinitialiser', genre:'Genre', all:'Tout', all_genres:'Tous les genres', language:'Langue', type:'Type', series:'Série', all_series:'Toutes les séries',
-  price:'Prix', up_to:'Jusqu\u2019à', promo_only:'Promotions uniquement', promo_desc:'Afficher seulement les volumes en promo', cq_ph:'Rechercher dans les résultats…', load_more:'Afficher plus', no_res:'Aucun volume ne correspond à ces filtres.',
+  price:'Prix', up_to:'Jusqu\u2019à', promo_only:'Promotions uniquement', promo_desc:'Afficher seulement les volumes en promo', cq_ph:'Rechercher dans les résultats…',   load_more:'Afficher plus', no_res:'Aucun volume ne correspond à ces filtres.', f_apply:'Voir les produits',
   lang_en:'Anglais', lang_fr:'Français', lang_ar:'Arabe',
   g_shonen:'Shonen', g_seinen:'Seinen', g_shojo:'Shojo', g_josei:'Josei', g_isekai:'Isekai', g_action:'Action', g_fantasy:'Fantasy', g_romance:'Romance', g_drama:'Drame', g_horror:'Horreur', g_mystery:'Mystère & Thriller', g_scifi:'Sci-Fi', g_comedy:'Comédie', g_sport:'Sport',
   ty_manga:'Manga', ty_manhwa:'Manhwa', ty_novel:'Novels', ty_comics:'Comics',
@@ -1621,7 +1625,7 @@ ar:{
   cat_pill:'مجلدات أصلية', cat_pill_g:'مقتنيات أصلية', cat_title:'الكتالوج', cat_sub:'اعثر على مجلداتك الأصلية المستوردة', cat_sub_g:'اعثر على مقتنياتك المفضلة المستوردة', found:'نتيجة',
   sort_new:'الأحدث', sort_lo:'السعر: الأقل أولًا', sort_hi:'السعر: الأعلى أولًا', sort_az:'A → Z', sort_aria:'ترتيب',
   filters:'التصفية', refine:'حسّن اختيارك', reset:'إعادة ضبط', genre:'التصنيف', all:'الكل', all_genres:'كل التصنيفات', language:'اللغة', type:'الفئة', series:'السلسلة', all_series:'كل السلاسل',
-  price:'السعر', up_to:'حتى', promo_only:'العروض فقط', promo_desc:'عرض المجلدات المخفّضة فقط', cq_ph:'ابحث في النتائج…', load_more:'عرض المزيد', no_res:'لا يوجد مجلد يطابق هذه المعايير.',
+  price:'السعر', up_to:'حتى', promo_only:'العروض فقط', promo_desc:'عرض المجلدات المخفّضة فقط', cq_ph:'ابحث في النتائج…', load_more:'عرض المزيد', no_res:'لا يوجد مجلد يطابق هذه المعايير.', f_apply:'عرض المنتجات',
   lang_en:'الإنجليزية', lang_fr:'الفرنسية', lang_ar:'العربية',
   g_shonen:'شونن', g_seinen:'سينن', g_shojo:'شوجو', g_josei:'جوسي', g_isekai:'إيسيكاي', g_action:'أكشن', g_fantasy:'فانتازيا', g_romance:'رومانسي', g_drama:'دراما', g_horror:'رعب', g_mystery:'غموض وإثارة', g_scifi:'خيال علمي', g_comedy:'كوميديا', g_sport:'رياضة',
   ty_manga:'مانجا', ty_manhwa:'مانهوا', ty_novel:'روايات', ty_comics:'كوميكس',
@@ -2021,17 +2025,23 @@ function viewCatalogue(){
   const sortOpts=['new','lo','hi','az'].map(s=>'<option value="'+s+'"'+(F.sort===s?' selected':'')+'>'+t('sort_'+s)+'</option>').join('');
   const serOpts='<option value="all">'+t('all_series')+'</option>'+SERIES.map(s=>'<option value="'+s.k+'"'+(F.series===s.k?' selected':'')+'>'+esc(s.name)+'</option>').join('');
   const acc=(id,open,label,small,body)=>'<details class="fs" id="'+id+'"'+(open?' open':'')+'><summary><span class="f-lab">'+label+(small?' <small>'+small+'</small>':'')+'</span><span class="f-car">'+IC.down+'</span></summary><div class="fs-b">'+body+'</div></details>';
-  return '<section class="page pad w-xl"><div class="cat-head"><div><span class="tagp" id="chPill">'+IC.book+catHead().pill+'</span><h1 id="chTitle">'+catHead().title+'</h1><p class="sr" aria-live="polite"><b id="ccount"></b></p></div>'
+  return '<section class="page pad w-xl"><div class="cat-head"><div><span class="tagp" id="chPill">'+IC.book+catHead().pill+'</span><h1 id="chTitle">'+catHead().title+'</h1><p class="sr" aria-live="polite"><b id="ccount"></b></p></div></div>'
+   +'<div class="abar" id="abar"></div>'
+   +'<div class="cat-tools"><button class="btn ghost ftoggle" type="button" id="ftoggle" aria-expanded="false" aria-controls="filters">'+IC.filter+t('filters')+'<span class="fbadge" id="ftcount" hidden></span></button><div class="sbar">'+IC.search+'<input type="search" id="cq" value="'+esc(F.q)+'" placeholder="'+t('cq_ph')+'" aria-label="'+t('cq_ph')+'" autocomplete="off"></div>'
    +'<select class="sel" id="csort" aria-label="'+t('sort_aria')+'">'+sortOpts+'</select></div>'
-   +'<div class="cat-body"><aside class="filters" id="filters"><div class="f-top"><h2>'+t('filters')+' <span class="fbadge" id="fcount" hidden></span></h2><button class="chip" type="button" id="creset">'+t('reset')+'</button></div>'
-   +acc('fs-g',true,t('genre'),t('all_genres'),'<div class="chips">'+DEMOS.map(g=>chip('genre',g,t('g_'+g))).join('')+GENRES.map(g=>chip('genre',g,t('g_'+g))).join('')+'</div>')
-   +acc('fs-l',true,t('language'),'', '<div class="chips">'+chip('lang','all',t('all'))+['en','fr','ar'].map(l=>chip('lang',l,t('lang_'+l))).join('')+'</div>')
-   +acc('fs-t',true,t('type'),'', '<div class="chips">'+chip('type','all',t('all'))+BOOKS.map(k=>chip('type',k,t('ty_'+k))).join('')+'</div><div class="chips">'+chip('type','goods',t('ty_goods'))+GOODS.map(k=>chip('type',k,t('ty_'+k))).join('')+'</div>')
-   +acc('fs-s',false,t('series'),'', '<select class="sel" style="width:100%" id="cseries" aria-label="'+t('series')+'">'+serOpts+'</select>')
-   +acc('fs-p',false,t('price'),'', '<div class="rng"><span class="rng-tag" id="rtag"></span><input type="range" id="crange" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.max+'" aria-label="'+t('up_to')+'"><div class="rng-lim"><span>'+fmt(PMIN)+'</span><span>'+fmt(PMAX)+'</span></div></div>')
-   +'<div class="fs"><div class="sw-row"><div><h3>'+t('promo_only')+'</h3><p>'+t('promo_desc')+'</p></div><button class="sw" type="button" role="switch" data-f="promo" data-v="1" aria-checked="false" aria-label="'+t('promo_only')+'"></button></div></div></aside>'
-   +'<div><div class="abar" id="abar"></div><div class="cat-tools"><button class="btn ghost ftoggle" type="button" id="ftoggle" aria-expanded="false" aria-controls="filters">'+IC.filter+t('filters')+'<span class="fbadge" id="ftcount" hidden></span></button><div class="sbar">'+IC.search+'<input type="search" id="cq" value="'+esc(F.q)+'" placeholder="'+t('cq_ph')+'" aria-label="'+t('cq_ph')+'" autocomplete="off"></div></div>'
-   +'<div class="grid" id="cgrid"></div><div class="more" id="cmoreW"><button class="btn soft" type="button" id="cmore">'+t('load_more')+'</button></div></div></div></section>';
+   +'<div class="cat-body"><div class="grid" id="cgrid"></div><div class="more" id="cmoreW"><button class="btn soft" type="button" id="cmore">'+t('load_more')+'</button></div></div>'
+   +'<aside class="fdrawer" id="filters" role="dialog" aria-modal="true" aria-label="'+t('filters')+'">'
+    +'<div class="f-top"><h2>'+t('filters')+' <span class="fbadge" id="fcount" hidden></span></h2><button class="fcx" type="button" id="fclose" aria-label="'+t('sm_close')+'"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
+    +'<div class="fd-b">'
+     +acc('fs-g',true,t('genre'),t('all_genres'),'<div class="chips">'+DEMOS.map(g=>chip('genre',g,t('g_'+g))).join('')+GENRES.map(g=>chip('genre',g,t('g_'+g))).join('')+'</div>')
+     +acc('fs-l',true,t('language'),'', '<div class="chips">'+chip('lang','all',t('all'))+['en','fr','ar'].map(l=>chip('lang',l,t('lang_'+l))).join('')+'</div>')
+     +acc('fs-t',true,t('type'),'', '<div class="chips">'+chip('type','all',t('all'))+BOOKS.map(k=>chip('type',k,t('ty_'+k))).join('')+'</div><div class="chips">'+chip('type','goods',t('ty_goods'))+GOODS.map(k=>chip('type',k,t('ty_'+k))).join('')+'</div>')
+     +acc('fs-s',false,t('series'),'', '<select class="sel" style="width:100%" id="cseries" aria-label="'+t('series')+'">'+serOpts+'</select>')
+     +acc('fs-p',false,t('price'),'', '<div class="rng"><span class="rng-tag" id="rtag"></span><input type="range" id="crange" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.max+'" aria-label="'+t('up_to')+'"><div class="rng-lim"><span>'+fmt(PMIN)+'</span><span>'+fmt(PMAX)+'</span></div></div>')
+     +'<div class="fs"><div class="sw-row"><div><h3>'+t('promo_only')+'</h3><p>'+t('promo_desc')+'</p></div><button class="sw" type="button" role="switch" data-f="promo" data-v="1" aria-checked="false" aria-label="'+t('promo_only')+'"></button></div></div>'
+    +'</div>'
+    +'<div class="fd-f"><button class="btn soft" type="button" id="freset">'+t('reset')+'</button><button class="btn" type="button" id="fapply">'+t('f_apply')+' (<b id="fapplyn"></b>)</button></div>'
+   +'</aside><div class="fback" id="fback"></div></section>';
 }
 function activeChips(){
   const a=[];
@@ -2062,9 +2072,18 @@ function syncCat(){
   const r=$('#crange'); r.value=F.max; r.style.setProperty('--rngp',(pct*100).toFixed(1)+'%');
   const ab=$('#abar'), ac=activeChips();
   if(ab) ab.innerHTML=ac.length?ac.map(c=>'<button class="achip" type="button" data-ak="'+esc(c.k)+'" data-av="'+esc(c.v)+'" aria-label="'+esc(t('reset').toLowerCase()+' : '+c.l)+'">'+esc(c.l)+IC.x+'</button>').join('')+'<button class="lnk" type="button" id="aclear">'+t('reset')+'</button>':'';
-  const f1=$('#fcount'), f2=$('#ftcount');
+  const f1=$('#fcount'), f2=$('#ftcount'), fn=$('#fapplyn');
   if(f1){ f1.textContent=ac.length; f1.hidden=!ac.length; }
   if(f2){ f2.textContent=ac.length; f2.hidden=!ac.length; }
+  if(fn) fn.textContent=list.length;
+}
+function fdrawer(open){
+  const f=$('#filters'), b=$('#fback'), btn=$('#ftoggle');
+  if(!f) return;
+  f.classList.toggle('open',open);
+  if(b) b.classList.toggle('open',open);
+  if(btn) btn.setAttribute('aria-expanded',String(open));
+  document.body.classList.toggle('flock',open);
 }
 
 /* ---- Produit ---- */
@@ -2974,6 +2993,7 @@ function render(){
   const p=route.path; let html, home=false;
   const isAd=p==='/admin'||p.indexOf('/admin/')===0;
   clearInterval(flipT);
+  document.body.classList.remove('flock');
   document.body.classList.toggle('adm',isAd);
   document.title=isAd?'Admin \u2014 '+STORE.name:t('title');
   if(isAd){
@@ -3102,9 +3122,11 @@ app.addEventListener('click',e=>{
     F.page=1; return syncCat();
   }
   if(e.target.closest('#aclear')){ F=newF({}); render(); return; }
-  if(e.target.closest('#creset')||e.target.closest('#creset2')){ F=newF({}); render(); return; }
+  if(e.target.closest('#freset')||e.target.closest('#creset2')){ F=newF({}); render(); return; }
+  if(e.target.closest('#fapply')){ fdrawer(false); return; }
+  if(e.target.closest('#ftoggle')){ fdrawer(true); return; }
+  if(e.target.closest('#fclose')||e.target.closest('#fback')){ fdrawer(false); return; }
   if(e.target.closest('#cmore')){ F.page++; return syncCat(); }
-  if((b=e.target.closest('#ftoggle'))){ const f=$('#filters'); const o=f.classList.toggle('open'); b.setAttribute('aria-expanded',String(o)); return; }
 });
 app.addEventListener('input',e=>{
   if(e.target.id==='cq'){ F.q=e.target.value; F.page=1; syncCat(); }
@@ -3164,6 +3186,7 @@ smq.addEventListener('keydown',e=>{
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&!$('#am').hidden) amClose();
   else if(e.key==='Escape'&&!sm.hidden) smClose();
+  else if(e.key==='Escape'&&document.body.classList.contains('flock')) fdrawer(false);
   else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ if(document.body.classList.contains('adm')) return; e.preventDefault(); sm.hidden?smOpen():smClose(); }
 });
 
