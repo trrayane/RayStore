@@ -187,7 +187,6 @@ const defaults = {
   store_instagram: 'https://www.instagram.com/',
   ship_home: 700,
   ship_stopdesk: 550,
-  homesec_comics: 1,
   homesec_manga: 1,
   homesec_manhwa: 1,
   homesec_novel: 1,

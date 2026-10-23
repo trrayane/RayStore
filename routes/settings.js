@@ -16,7 +16,6 @@ router.get('/', async (req, res) => {
       stopdesk: await getSetting('ship_stopdesk')
     },
     homesec: {
-      comics: !!(await getSetting('homesec_comics')),
       manga: !!(await getSetting('homesec_manga')),
       manhwa: !!(await getSetting('homesec_manhwa')),
       novel: !!(await getSetting('homesec_novel')),
@@ -38,7 +37,6 @@ router.put('/', authRequired, async (req, res) => {
     if (body.ship.stopdesk != null) await setSetting('ship_stopdesk', Number(body.ship.stopdesk) || 0);
   }
   if (body.homesec) {
-    if (body.homesec.comics != null) await setSetting('homesec_comics', !!body.homesec.comics);
     if (body.homesec.manga != null) await setSetting('homesec_manga', !!body.homesec.manga);
     if (body.homesec.manhwa != null) await setSetting('homesec_manhwa', !!body.homesec.manhwa);
     if (body.homesec.novel != null) await setSetting('homesec_novel', !!body.homesec.novel);

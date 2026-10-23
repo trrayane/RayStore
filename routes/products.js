@@ -6,7 +6,7 @@ const { logMovement, listMovements } = require('../stock_journal');
 
 const router = express.Router();
 
-const BOOKS = ['manga', 'manhwa', 'novel', 'comics'];
+const BOOKS = ['manga', 'manhwa', 'novel'];
 const GOODS = ['figurine', 'poster', 'apparel', 'accessory', 'cards', 'deco', 'plush', 'mug', 'sticker', 'jewelry', 'stationery', 'bag', 'phonecase'];
 const TYPES = [...BOOKS, ...GOODS];
 const DEMOS = ['shonen', 'seinen', 'shojo', 'josei', 'isekai'];

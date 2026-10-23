@@ -42,10 +42,10 @@ app.use(express.static(path.join(__dirname), { index: 'index.html' }));
 const PUBLIC = process.env.PUBLIC_URL || 'https://raystore.space';
 const OG_IMG = PUBLIC + '/p/og-banner.png?v=4';
 const LANGFR = { fr: 'Français', en: 'Anglais', ar: 'Arabe' };
-const BOOKS = ['manga', 'manhwa', 'novel', 'comics'];
+const BOOKS = ['manga', 'manhwa', 'novel'];
 const DEFAULT_SEO = {
-  title: 'raystore — Manga, comics, goodies et plus',
-  desc: 'RayStore — mangas, comics et goodies en Algérie. Paiement à la livraison, livraison rapide partout en Algérie.',
+  title: 'raystore — Manga, goodies et plus',
+  desc: 'RayStore — mangas et goodies en Algérie. Paiement à la livraison, livraison rapide partout en Algérie.',
   url: PUBLIC + '/',
   img: OG_IMG,
   ld: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'RayStore', url: PUBLIC + '/' }
@@ -76,7 +76,7 @@ function seoBlock(o) {
 }
 
 const TYPE_LABEL = {
-  manga: 'Manga', manhwa: 'Manhwa', novel: 'Roman', comics: 'Comics',
+  manga: 'Manga', manhwa: 'Manhwa', novel: 'Roman',
   figurine: 'Figurine', poster: 'Affiche', apparel: 'Vêtement', accessory: 'Accessoire',
   cards: 'Cartes', deco: 'Décoration', plush: 'Peluche', mug: 'Mug', sticker: 'Sticker',
   jewelry: 'Bijou', stationery: 'Papeterie', bag: 'Sac', phonecase: 'Coque de téléphone'
@@ -155,7 +155,7 @@ async function buildSeo(req) {
   if (req.path === '/catalogue') {
     return Object.assign({}, DEFAULT_SEO, {
       title: 'Catalogue — RayStore',
-      desc: 'Parcourez tous les mangas, manhwa, comics et goodies disponibles chez RayStore. Livraison rapide partout en Algérie.',
+      desc: 'Parcourez tous les mangas, manhwa et goodies disponibles chez RayStore. Livraison rapide partout en Algérie.',
       url: url, img: '',
       ld: [DEFAULT_SEO.ld, breadcrumbLd([
         { name: 'RayStore', item: PUBLIC + '/' },

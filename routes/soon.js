@@ -10,7 +10,7 @@ function normSoon(s = {}) {
     name: String(s.name || '').trim(),
     a: hex(s.a),
     b: hex(s.b),
-    style: ['manga', 'manhwa', 'novel', 'comics'].includes(s.style) ? s.style : 'manga',
+    style: ['manga', 'manhwa', 'novel'].includes(s.style) ? s.style : 'manga',
     img: s.img || '',
     sort_order: Number(s.sort_order) || 0,
     active: s.active === false ? false : true

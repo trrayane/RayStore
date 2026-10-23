@@ -24,7 +24,7 @@ RayStore est une boutique en ligne complète, déployée sur Vercel :
 ## Fonctionnalités
 
 ### Boutique
-- Catalogue par type (manga, manhwa, novel, comics, goodies), genres, langue, prix et disponibilité.
+- Catalogue par type (manga, manhwa, novel, goodies), genres, langue, prix et disponibilité.
 - Recherche instantanée avec vignettes, tri, filtres persistés dans l'URL.
 - Pages produits en URL propre (`/p/jjk-1`) avec couvertures, volumes et stock en direct.
 - Panier, favoris, livraison à domicile ou point relais, récapitulatif chiffré.
