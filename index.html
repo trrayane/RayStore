@@ -2022,14 +2022,14 @@ function filtered(){
 const chip=(k,v,label)=>'<button type="button" class="chip" data-f="'+k+'" data-v="'+v+'" aria-pressed="false">'+esc(label)+'</button>';
 function catHead(){
   const ty=F&&F.type, g=ty==='goods'||(ty&&isGood(ty));
-  if(!g) return {pill:t('cat_pill'),title:t('cat_title'),goods:false};
-  return {pill:t('cat_pill_g'),title:ty==='goods'?t('ty_goods'):t('ty_'+ty),goods:true};
+  if(!g) return {title:t('cat_title')};
+  return {title:ty==='goods'?t('ty_goods'):t('ty_'+ty)};
 }
 function viewCatalogue(){
   const sortOpts=['new','lo','hi','az'].map(s=>'<option value="'+s+'"'+(F.sort===s?' selected':'')+'>'+t('sort_'+s)+'</option>').join('');
   const serOpts='<option value="all">'+t('all_series')+'</option>'+SERIES.map(s=>'<option value="'+s.k+'"'+(F.series===s.k?' selected':'')+'>'+esc(s.name)+'</option>').join('');
   const acc=(id,open,label,small,body)=>'<details class="fs" id="'+id+'"'+(open?' open':'')+'><summary><span class="f-lab">'+label+(small?' <small>'+small+'</small>':'')+'</span><span class="f-car">'+IC.down+'</span></summary><div class="fs-b">'+body+'</div></details>';
-  return '<section class="page pad w-xl"><div class="cat-head"><div><span class="tagp" id="chPill">'+IC.book+catHead().pill+'</span><h1 id="chTitle">'+catHead().title+'</h1><p class="sr" aria-live="polite"><b id="ccount"></b></p></div></div>'
+  return '<section class="page pad w-xl"><div class="cat-head"><div><h1 id="chTitle">'+catHead().title+'</h1><p class="sr" aria-live="polite"><b id="ccount"></b></p></div></div>'
    +'<div class="abar" id="abar"></div>'
    +'<div class="cat-tools"><button class="btn ghost ftoggle" type="button" id="ftoggle" aria-expanded="false" aria-controls="filters">'+IC.filter+t('filters')+'<span class="fbadge" id="ftcount" hidden></span></button><div class="sbar">'+IC.search+'<input type="search" id="cq" value="'+esc(F.q)+'" placeholder="'+t('cq_ph')+'" aria-label="'+t('cq_ph')+'" autocomplete="off"></div>'
    +'<select class="sel" id="csort" aria-label="'+t('sort_aria')+'">'+sortOpts+'</select></div>'
@@ -2059,8 +2059,7 @@ function activeChips(){
 }
 function syncCat(){
   const list=filtered(), shown=list.slice(0,F.page*PAGE);
-  { const h=catHead(), pl=$('#chPill'), ti=$('#chTitle');
-    if(pl){ const ic=h.goods?'':IC.book; if(pl.dataset.g!==String(h.goods)||pl.lastChild.textContent!==h.pill){ pl.innerHTML=(h.goods?IC.shop:IC.book)+h.pill; pl.dataset.g=String(h.goods); } }
+  { const h=catHead(), ti=$('#chTitle');
     if(ti) ti.textContent=h.title; }
   $('#ccount').textContent='('+list.length+' '+t('found')+')';
   $$('[data-f]').forEach(b=>{
