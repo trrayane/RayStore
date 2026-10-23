@@ -348,9 +348,13 @@ html[dir="rtl"] .fdrawer{left:auto;right:0;border-inline-end:0;border-inline-sta
 .achip:hover{background:var(--mag);border-color:var(--mag)}
 .achip:active{transform:scale(.94)}
 .rng2{position:relative;direction:ltr;margin-top:2px}
-.rng-vals{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}
-.rngb{background:var(--hi);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-family:var(--mono);font-size:12.5px;font-weight:700;white-space:nowrap}
-.rngb.max{background:var(--pri);border-color:var(--pri);color:#fff}
+.rng-vals{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.rngf{display:inline-flex;align-items:center;gap:6px;height:42px;border:1.5px solid var(--line);border-radius:12px;background:var(--hi);padding:0 12px;transition:border-color var(--snap),box-shadow var(--snap)}
+.rngf:focus-within{border-color:var(--pri);box-shadow:0 0 0 4px rgba(150,24,95,.28)}
+.rngf input{width:86px;border:0;background:none;font-family:var(--mono);font-weight:700;font-size:13.5px;padding:0;color:var(--ink);outline:none;-moz-appearance:textfield;appearance:textfield}
+.rngf input::-webkit-outer-spin-button,.rngf input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.rngf>span{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted)}
+.rng-sep{color:var(--muted);font-weight:700;flex:none}
 .rng-tra{position:relative;height:6px;border-radius:3px;background:var(--line);margin:6px 0 2px;pointer-events:none}
 .rng-fill{position:absolute;top:0;bottom:0;left:0;right:0;background:var(--pri);border-radius:3px}
 .rng-rng{position:relative;height:26px;margin-top:-6px}
@@ -2050,7 +2054,7 @@ function viewCatalogue(){
      +acc('fs-l',true,t('language'),'', '<div class="chips">'+chip('lang','all',t('all'))+['en','fr','ar'].map(l=>chip('lang',l,t('lang_'+l))).join('')+'</div>')
      +acc('fs-t',true,t('type'),'', '<div class="chips">'+chip('type','all',t('all'))+BOOKS.map(k=>chip('type',k,t('ty_'+k))).join('')+'</div><div class="chips">'+chip('type','goods',t('ty_goods'))+GOODS.map(k=>chip('type',k,t('ty_'+k))).join('')+'</div>')
      +acc('fs-s',false,t('series'),'', '<select class="sel" style="width:100%" id="cseries" aria-label="'+t('series')+'">'+serOpts+'</select>')
-     +acc('fs-p',false,t('price'),'', '<div class="rng2"><div class="rng-vals"><span class="rngb" id="rmin"></span><span class="rngb max" id="rmax"></span></div><div class="rng-tra"><div class="rng-fill" id="rfill"></div></div><div class="rng-rng"><input type="range" id="cr2min" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.min+'" aria-label="'+t('price')+' min"><input type="range" id="crange" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.max+'" aria-label="'+t('up_to')+'"></div><div class="rng-lim"><span>'+fmt(PMIN)+'</span><span>'+fmt(PMAX)+'</span></div></div>')
+     +acc('fs-p',false,t('price'),'', '<div class="rng2"><div class="rng-vals"><label class="rngf"><input id="rmin" type="number" inputmode="numeric" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.min+'" aria-label="'+t('price')+' min"><span>'+t('cur')+'</span></label><span class="rng-sep">\u2013</span><label class="rngf"><input id="rmax" type="number" inputmode="numeric" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.max+'" aria-label="'+t('up_to')+'"><span>'+t('cur')+'</span></label></div><div class="rng-tra"><div class="rng-fill" id="rfill"></div></div><div class="rng-rng"><input type="range" id="cr2min" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.min+'" aria-label="'+t('price')+' min"><input type="range" id="crange" min="'+PMIN+'" max="'+PMAX+'" step="100" value="'+F.max+'" aria-label="'+t('up_to')+'"></div><div class="rng-lim"><span>'+fmt(PMIN)+'</span><span>'+fmt(PMAX)+'</span></div></div>')
      +'<div class="fs"><div class="fs-b pd-t"><div class="sw-row"><div><h3>'+t('promo_only')+'</h3><p>'+t('promo_desc')+'</p></div><button class="sw" type="button" role="switch" data-f="promo" data-v="1" aria-checked="false" aria-label="'+t('promo_only')+'"></button></div></div></div>'
     +'</div>'
     +'<div class="fd-f"><button class="btn soft" type="button" id="freset">'+t('reset')+'</button><button class="btn" type="button" id="fapply">'+t('f_apply')+'<b class="fapply-n" id="fapplyn"></b></button></div>'
@@ -2080,12 +2084,12 @@ function syncCat(){
   });
   $('#cgrid').innerHTML=shown.length?shown.map(card).join(''):'<div class="empty" style="grid-column:1/-1"><h2>'+t('no_res')+'</h2><button class="btn ghost" type="button" id="creset2">'+t('reset')+'</button></div>';
   $('#cmoreW').hidden=shown.length>=list.length;
-  const rmin=$('#cr2min'), rmax=$('#crange'), rf=$('#rfill'), v1=$('#rmin'), v2=$('#rmax');
-  if(rmin&&rmax&&rf&&v1&&v2){
-    rmin.value=F.min; rmax.value=F.max;
+  const rminI=$('#cr2min'), rmaxI=$('#crange'), rf=$('#rfill'), v1=$('#rmin'), v2=$('#rmax');
+  if(rminI&&rmaxI&&rf&&v1&&v2){
+    rminI.value=F.min; rmaxI.value=F.max;
     const p1=((F.min-PMIN)/(PMAX-PMIN))*100, p2=((F.max-PMIN)/(PMAX-PMIN))*100;
     rf.style.left=p1+'%'; rf.style.right=(100-p2)+'%';
-    v1.textContent=fmt(F.min); v2.textContent=fmt(F.max);
+    v1.value=F.min; v2.value=F.max;
   }
   const ab=$('#abar'), ac=activeChips();
   if(ab) ab.innerHTML=ac.length?ac.map(c=>'<button class="achip" type="button" data-ak="'+esc(c.k)+'" data-av="'+esc(c.v)+'" aria-label="'+esc(t('reset').toLowerCase()+' : '+c.l)+'">'+esc(c.l)+IC.x+'</button>').join('')+'<button class="lnk" type="button" id="aclear">'+t('reset')+'</button>':'';
@@ -3150,6 +3154,15 @@ app.addEventListener('input',e=>{
   if(e.target.id==='cq'){ F.q=e.target.value; F.page=1; syncCat(); }
   else if(e.target.id==='crange'){ F.max=+e.target.value; if(F.min>F.max-100) F.min=Math.max(PMIN,F.max-100); F.page=1; syncCat(); }
   else if(e.target.id==='cr2min'){ F.min=+e.target.value; if(F.max<F.min+100) F.max=Math.min(PMAX,F.min+100); F.page=1; syncCat(); }
+});
+app.addEventListener('change',e=>{
+  if(e.target.id==='rmin'||e.target.id==='rmax'){
+    let v=Math.round(+e.target.value);
+    if(isNaN(v)||!e.target.value) v=(e.target.id==='rmin'?PMIN:PMAX);
+    if(e.target.id==='rmin') F.min=Math.max(PMIN,Math.min(v,F.max));
+    else F.max=Math.min(PMAX,Math.max(v,F.min));
+    F.page=1; syncCat();
+  }
 });
 app.addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('fc')){ e.preventDefault(); fanTurn(e.target); }
