@@ -177,7 +177,6 @@ html[dir="rtl"] .lnk:hover svg{transform:scaleX(-1) translateX(5px)}
 /* ===== Sections / rows ===== */
 .sec{overflow-x:clip}
 .sec-in{padding-top:clamp(44px,6vw,84px);padding-bottom:clamp(44px,6vw,84px)}
-.sec.alt{background:var(--surface);border-block:1px solid var(--line)}
 .sec-h{font-family:var(--disp);font-weight:800;font-size:clamp(24px,3.6vw,44px);line-height:1.1;letter-spacing:-.02em}
 .sec-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:clamp(24px,3.4vw,40px)}
 .row{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 104px)/5);gap:26px;overflow-x:auto;padding:30px 20px 48px 12px;margin:-30px -20px -48px -12px;scroll-snap-type:x proximity;scrollbar-width:none;align-items:stretch}
@@ -1905,13 +1904,13 @@ function allCard(href,tagK,titleK,items){
    +'<a class="card" href="'+href+'"><div class="all-img"><div class="ghost">'+itemCover(a)+'</div><span class="circ">'+IC.arrow+'</span><span class="all-l">'+esc(t(titleK))+'</span></div>'
    +'<div class="c-body"><p class="c-ser">'+t(tagK)+'</p><h3 class="c-t">'+esc(t(titleK).replace(/^Voir /,'').replace(/^كل /,''))+'</h3><p class="c-note">'+t('all_note')+'</p></div></a></div>';
 }
-function rowSec(secK,items,all,alt){
+function rowSec(secK,items,all){
   if(!items.length) return '';
   /* Les rangées sont forcées en LTR (même en arabe) : l'ordre DOM est donc
      toujours gauche→droite, la carte "voir tout" reste à la fin (à droite). */
   const seeAll=allCard(all.href,all.tag,all.title,items), cards=items.map(card).join('');
   const rowHtml=cards+seeAll;
-  return '<section class="sec'+(alt?' alt':'')+'"><div class="sec-in pad w-xl"><div class="sec-top"><h2 class="sec-h">'+t(secK)+'</h2></div><div class="row">'
+  return '<section class="sec"><div class="sec-in pad w-xl"><div class="sec-top"><h2 class="sec-h">'+t(secK)+'</h2></div><div class="row">'
     +rowHtml+'</div></div></section>';
 }
 function marquee(){
@@ -1966,11 +1965,11 @@ function viewHome(){
     +SOON.map(s=>'<article class="card soon"><div class="c-img">'+cover({title:s.name,vol:null,style:s.style,a:s.a,b:s.b,img:s.img})+'<span class="pillb y">'+t('soon')+'</span></div><div class="c-body"><h3 class="c-t">'+esc(s.name)+'</h3></div></article>').join('')+'</div></div></section>':'';
   return hero+marquee()
    +rowSec('sec_popular',popular,{href:'#/catalogue',tag:'tag_popular',title:'all_popular'})
-    +(HOMESEC.promo?rowSec('sec_promo',pick(i=>i.old),{href:'#/catalogue?promo=1',tag:'tag_promo',title:'all_promo'},true):'')
+    +(HOMESEC.promo?rowSec('sec_promo',pick(i=>i.old),{href:'#/catalogue?promo=1',tag:'tag_promo',title:'all_promo'}):'')
    +(HOMESEC.manga?rowSec('sec_manga',pick(i=>i.s.type==='manga'),{href:'#/catalogue?type=manga',tag:'tag_manga',title:'all_manga'}):'')
    +(HOMESEC.manhwa?rowSec('sec_manhwa',pick(i=>i.s.type==='manhwa'),{href:'#/catalogue?type=manhwa',tag:'tag_manhwa',title:'all_manhwa'}):'')
    +(HOMESEC.novel?rowSec('sec_novel',pick(i=>i.s.type==='novel'),{href:'#/catalogue?type=novel',tag:'tag_novel',title:'all_novel'}):'')
-   +(HOMESEC.goods?rowSec('sec_goods',pickGoods(),{href:'#/catalogue?type=goods',tag:'tag_goods',title:'all_goods'},true):'');
+   +(HOMESEC.goods?rowSec('sec_goods',pickGoods(),{href:'#/catalogue?type=goods',tag:'tag_goods',title:'all_goods'}):'');
 }
 /* Mot qui se retourne dans le titre du hero */
 function startFlip(){
