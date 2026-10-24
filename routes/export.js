@@ -27,6 +27,7 @@ router.get('/json', authRequired, async (req, res) => {
         stopdesk: await getSetting('ship_stopdesk')
       },
       homesec: {
+        promo: !!(await getSetting('homesec_promo')),
         manga: !!(await getSetting('homesec_manga')),
         manhwa: !!(await getSetting('homesec_manhwa')),
         novel: !!(await getSetting('homesec_novel')),
