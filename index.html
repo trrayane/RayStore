@@ -267,19 +267,34 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .tagp b{font-weight:700;color:var(--mag)}
 .tagp svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
+/* ===== Premier chargement (squelette) ===== */
+.sk{position:relative;overflow:hidden;background:var(--hst);border-radius:12px;display:block}
+.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:translateX(-100%);animation:skShine 1.2s ease-in-out infinite}
+@keyframes skShine{to{transform:translateX(100%)}}
+.sk-hero{display:flex;justify-content:center;align-items:flex-end;gap:14px;padding:0 16px 34px;overflow:hidden}
+.sk-hero .sk{width:clamp(80px,12vw,124px);aspect-ratio:2/3;border-radius:10px}
+.sk-hero .sk:nth-child(2n){margin-bottom:18px}
+.sk-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.sk-row .sk{aspect-ratio:3/4;border-radius:var(--r16)}
+.empty{display:grid;justify-items:start;gap:10px;padding:24px 0}
+.empty p{color:var(--muted);max-width:34em}
+.empty .btn{margin-top:6px}
+@media (max-width:639px){.sk-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){.sk::after{animation:none}}
+
 /* ===== Footer ===== */
 .foot{border-top:1px solid var(--line);background:var(--surface)}
-.foot-in{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:36px;padding-top:56px;padding-bottom:44px}
-.foot h4{font-family:var(--disp);font-weight:800;font-size:15px;line-height:1.2;margin:6px 0 16px}
-.foot ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}
-.foot li a{display:inline-flex;align-items:center;min-height:36px;text-decoration:none;font-weight:600;font-size:15px;color:var(--muted);transition:color var(--snap),transform var(--move) var(--spring)}
+.foot-in{display:grid;grid-template-columns:1.25fr .9fr .9fr 1fr;gap:28px;padding-top:40px;padding-bottom:26px}
+.foot h4{font-family:var(--disp);font-weight:800;font-size:14px;line-height:1.2;margin:0 0 10px}
+.foot ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.foot li a{display:inline-flex;align-items:center;min-height:32px;text-decoration:none;font-weight:600;font-size:14.5px;color:var(--muted);transition:color var(--snap),transform var(--move) var(--spring)}
 .foot li a:hover{color:var(--ink);transform:translateX(4px)}
-.foot .tag{margin-top:14px;color:var(--muted);max-width:19em;font-size:15px;display:block;padding:0;border:0;border-radius:0;background:transparent;font-family:inherit;font-weight:400;white-space:normal;letter-spacing:normal}
-.foot .soc{display:flex;gap:12px;flex-wrap:wrap}
-.foot-b{border-top:1px solid var(--line);padding-top:18px;padding-bottom:26px;color:var(--muted);font-family:var(--mono);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.foot-b a{color:var(--muted);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;min-height:44px;padding:0 4px;transition:color var(--snap)}
+.foot .tag{margin-top:10px;color:var(--muted);max-width:20em;font-size:14.5px;display:block;padding:0;border:0;border-radius:0;background:transparent;font-family:inherit;font-weight:400;white-space:normal;letter-spacing:normal}
+.foot .soc{display:flex;gap:10px;flex-wrap:wrap}
+.foot-b{border-top:1px solid var(--line);padding-top:10px;padding-bottom:14px;color:var(--muted);font-family:var(--mono);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.foot-b a{color:var(--muted);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;min-height:34px;padding:0 4px;transition:color var(--snap)}
 .foot-b a:not(.copy-lnk):hover{color:var(--ink)}
-.foot-b .copy-lnk{color:inherit;text-decoration:none;font:inherit;min-height:44px;display:inline-flex;align-items:center;cursor:default;transition:opacity var(--snap)}
+.foot-b .copy-lnk{color:inherit;text-decoration:none;font:inherit;min-height:34px;display:inline-flex;align-items:center;cursor:default;transition:opacity var(--snap)}
 .foot-b .copy-lnk:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
 @media (max-width:1023px){.foot-in{grid-template-columns:1fr 1fr}}
 @media (max-width:639px){.foot-in{grid-template-columns:1fr}}
@@ -323,6 +338,8 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .fpanel-h{display:none}
 @media (max-width:639px){
   .fbar{gap:8px}
+  .fpills{flex-wrap:wrap;overflow:visible;gap:6px}
+  .fpill{height:36px;padding:0 12px;font-size:12px}
   .fbar-act{width:100%;justify-content:space-between}
   .fpanel-b{position:fixed;inset-inline:12px;bottom:12px;top:auto;width:auto;max-height:72vh;overflow-y:auto;overflow-x:clip;grid-template-columns:1fr;gap:16px;z-index:80}
   .fpanel-b>*{min-width:0;max-width:100%}
@@ -1503,7 +1520,7 @@ const GI = {
 // Exemples : remplace par ton vrai stock. Ajoute img:'data:image/...' pour utiliser une vraie couverture.
 // art:'URL' (optionnel) = grand dessin au trait du personnage affiché en fond, en fondu, sur la page produit
 //   (PNG/JPG/WebP, idéalement noir sur fond blanc ou transparent). Sans art, la couverture est utilisée en fond.
-let SERIES = [
+const SEED_SERIES = [
   {k:'dn',   feat:true, name:'Death Note Black Edition', short:'Death Note', type:'manga', lang:'fr', genres:['shonen','mystery'], author:'Tsugumi Ohba, Takeshi Obata', price:7000, vols:[6,5,4], style:'manga', a:'#0a0a0a', b:'#4b4b4b'},
   {k:'op',   name:'One Piece', type:'manga', lang:'fr', genres:['shonen','action','fantasy'], author:'Eiichiro Oda', price:1900, vols:[4,3,2,1], style:'manga', a:'#0b2a8f', b:'#3b8bff'},
   {k:'ds',   name:'Demon Slayer', type:'manga', lang:'fr', genres:['shonen','action','fantasy'], author:'Koyoharu Gotouge', price:1500, old:2000, vols:[13,12], style:'manga', a:'#2a0a12', b:'#c8323c'},
@@ -1551,23 +1568,31 @@ let SERIES = [
   {k:'cqs', name:'Coque téléphone Spider-Man', short:'Coque Spider-Man', type:'phonecase', lang:'fr', genres:[], price:1500, vols:[1], style:'phonecase', a:'#7a0c14', b:'#e63946'},
   {k:'cqd', name:'Coque téléphone Dragon Ball', short:'Coque Dragon Ball', type:'phonecase', lang:'fr', genres:[], price:1500, vols:[1], style:'phonecase', a:'#a53b00', b:'#ffd23f'}
 ];
+/* Catalogue de démonstration : uniquement utilisé par l'admin (réinitialisation).
+   Il n'est JAMAIS affiché aux visiteurs : au premier chargement, on attend les
+   données du serveur (voir BOOTED / viewSkeleton) au lieu de flasher des
+   anciens produits. */
+let SERIES = [];
 let HOMESEC = { promo:true, manga:true, manhwa:true, novel:true, goods:true };
-let SOON = [
+const SEED_SOON = [
   {name:'JoJo Lion', a:'#5a2fb5', b:'#26a6d9', style:'manga'},
   {name:'Look Back', a:'#5a9e3a', b:'#dbe86a', style:'manga'},
   {name:'Evangelion', a:'#6a5bd0', b:'#c7d8ff', style:'manhwa'},
   {name:'Sakamoto Days', a:'#0c2a12', b:'#4a8a4a', style:'manga'}
 ];
+let SOON = [];
 // Les 7 volumes affichés en éventail sur l’accueil. Modifiable dans Admin > Paramètres > Bannière d’accueil.
-let HERO = ['aot-1','ds-13','mha-1','op-1','jjk-1','ber-1','csm-1'];
+const SEED_HERO = ['aot-1','ds-13','mha-1','op-1','jjk-1','ber-1','csm-1'];
+let HERO = [];
 
-const DEF = { series:JSON.parse(JSON.stringify(SERIES)), soon:JSON.parse(JSON.stringify(SOON)), store:Object.assign({},STORE), ship:Object.assign({},SHIP), hero:HERO.slice(), homesec:Object.assign({},HOMESEC) };
+const DEF = { series:JSON.parse(JSON.stringify(SEED_SERIES)), soon:JSON.parse(JSON.stringify(SEED_SOON)), store:Object.assign({},STORE), ship:Object.assign({},SHIP), hero:SEED_HERO.slice(), homesec:Object.assign({},HOMESEC) };
 let ITEMS = [], PMIN = 0, PMAX = 1000, SUM_ORD = 0, MORE_CACHE = {};
 
 /* ================= Traductions ================= */
 const I18N = {
 fr:{
   cur:'DA', title:'raystore — Manga, goodies et plus',
+  loading:'Chargement du catalogue…', cat_off:'Catalogue momentanément indisponible', cat_off_p:'Vérifie ta connexion internet puis réessaie.', retry:'Réessayer',
   nav_catalogue:'Catalogue', nav_manga:'Manga', nav_manhwa:'Manhwa', nav_novel:'Novels', nav_promo:'Promos', a_menu:'Navigation',
   a_search:'Rechercher', a_fav:'Favoris', a_cart:'Panier', a_lang:'العربية', lang_btn:'AR', a_wa:'Nous écrire sur WhatsApp', a_theme:'Changer de thème', f_admin:'Administration', m_ref:'Réf.',
   h1_a:'Tes', h1_b:'livrés en Algérie', h1_sr:'Tes manga, manhwa, novels et goodies livrés en Algérie', hero_cta:'Explorer la collection',
@@ -1603,6 +1628,7 @@ fr:{
 },
 ar:{
   cur:'دج', title:'raystore — مانجا ومقتنيات',
+  loading:'جارٍ تحميل الكتالوج…', cat_off:'الكتالوج غير متاح مؤقتًا', cat_off_p:'تحقق من اتصالك بالإنترنت ثم أعد المحاولة.', retry:'إعادة المحاولة',
   nav_catalogue:'الكتالوج', nav_manga:'مانجا', nav_manhwa:'مانهوا', nav_novel:'روايات', nav_promo:'العروض', a_menu:'التنقل',
   a_search:'بحث', a_fav:'المفضلة', a_cart:'السلة', a_lang:'Français', lang_btn:'FR', a_wa:'راسلنا على واتساب', a_theme:'تغيير المظهر', f_admin:'الإدارة', m_ref:'المرجع',
   h1_a:'', h1_b:'تصلك في الجزائر', h1_sr:'مانجا ومانهوا وروايات ومقتنيات تصلك في الجزائر', hero_cta:'استكشف المجموعة',
@@ -1663,7 +1689,7 @@ async function apiReq(path,opt){
   opt=opt||{};
   const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),opt.timeout||8000);
   try{
-    const r=await fetch(API_BASE+path,{method:opt.method||'GET',headers:apiHeaders(opt.auth?apiTok():null),body:opt.body!==undefined?JSON.stringify(opt.body):undefined,signal:ctl.signal});
+    const r=await fetch(API_BASE+path,{method:opt.method||'GET',cache:'no-store',headers:apiHeaders(opt.auth?apiTok():null),body:opt.body!==undefined?JSON.stringify(opt.body):undefined,signal:ctl.signal});
     if(!r.ok){
       const err=new Error('HTTP '+r.status); err.status=r.status;
       err.body=await r.json().catch(()=>null);
@@ -1693,7 +1719,7 @@ function pushStoreAll(){
   ]);
 }
 function refreshStock(rerender){
-  return apiReq('/api/products').then(pr=>{
+  return apiReq('/api/products',{timeout:20000}).then(pr=>{
     if(!Array.isArray(pr)) return;
     SERIES=pr.map(s=>{ const c=JSON.parse(JSON.stringify(s)); if(c.desc==null) c.desc=''; return c; });
     SERIES.forEach(normSeries);
@@ -1703,13 +1729,18 @@ function refreshStock(rerender){
   }).catch(()=>{});
 }
 let bootDone=false;
+/* Tant que le serveur n'a pas répondu, on n'affiche pas le catalogue de
+   démonstration : soit le cache local existe (visiteur déjà venu), soit on
+   montre un squelette de chargement. */
+let BOOTED=false, BOOT_FAILED=false;
 async function bootSync(){
+  let changed=false;
   try{
     const res=await Promise.all([
-      apiReq('/api/settings').catch(()=>null),
-      apiReq('/api/products').catch(()=>null),
-      apiReq('/api/soon').catch(()=>null),
-      apiReq('/api/hero').catch(()=>null)
+      apiReq('/api/settings',{timeout:20000}).catch(()=>null),
+      apiReq('/api/products',{timeout:20000}).catch(()=>null),
+      apiReq('/api/soon',{timeout:20000}).catch(()=>null),
+      apiReq('/api/hero',{timeout:20000}).catch(()=>null)
     ]);
     const st=res[0], pr=res[1], so=res[2], he=res[3];
     if(st&&st.store){
@@ -1719,7 +1750,6 @@ async function bootSync(){
       if(st.ship){ if(st.ship.home!=null) SHIP.home=Number(st.ship.home)||0; if(st.ship.stopdesk!=null) SHIP.stopdesk=Number(st.ship.stopdesk)||0; }
       if(st.homesec) Object.keys(HOMESEC).forEach(k=>{ if(st.homesec[k]!=null) HOMESEC[k]=!!st.homesec[k]; });
     }
-    let changed=false;
     if(Array.isArray(pr)){
       const next=JSON.stringify(pr);
       const cur=SERIES.length?JSON.stringify(SERIES):'';
@@ -1740,10 +1770,13 @@ async function bootSync(){
     if(changed){ try{ persist(); }catch(x){} }
   }catch(x){
     /* Serveur injoignable : on garde les données locales mais on le dit clairement. */
+    BOOT_FAILED=true;
     netWarn(true);
   }finally{
+    const firstBoot=!BOOTED;
+    BOOTED=true;
     rebuild(); applyLang(); renderFoot();
-    if(changed) render();
+    if(firstBoot||changed) render();
     /* Préchargement des couvertures uniquement après chargement complet de la page
        (idle) : ne se bat plus avec les images visibles à l'ouverture. */
     if('requestIdleCallback' in window) requestIdleCallback(preloadImgs,{timeout:8000});
@@ -1778,13 +1811,14 @@ function normSeries(s){
   s.stock=(s.stock==null||s.stock==='')?99:Math.max(0,Math.floor(+s.stock||0));
   return s;
 }
+let HAS_CACHE=false;   /* un catalogue a-t-il déjà été reçu (cache local) ? */
 function loadData(){
   try{
     const d=JSON.parse(localStorage.getItem('tk-data')||'null'); if(!d) return;
     if(Array.isArray(d.series)){
       /* Source de vérité = le serveur. On ne réinjecte plus les exemples du code :
          tous les utilisateurs voient exactement le catalogue servi par l'API. */
-      SERIES=d.series;
+      SERIES=d.series; HAS_CACHE=true;
     }
     if(Array.isArray(d.soon)) SOON=d.soon;
     if(d.homesec&&typeof d.homesec==='object') Object.assign(HOMESEC,d.homesec);
@@ -1943,6 +1977,28 @@ function fanTurn(fc){
   const d=cur<3?-1:1;
   fan.querySelectorAll('.fc').forEach(el=>fanSet(el,((+el.dataset.slot+d)%7+7)%7));
 }
+/* Squelette affiché pendant le tout premier chargement (avant la réponse du serveur).
+   Objectif : ne jamais montrer le catalogue de démonstration / d'anciens produits. */
+function viewSkeleton(){
+  const a=t('h1_a');
+  const card='<span class="sk"></span>';
+  const status='<p class="sr" role="status" aria-live="polite">'+esc(t('loading'))+'</p>';
+  if(route.path==='/catalogue'){
+    return '<section class="page pad w-xl"><div class="cat-head"><div><h1>'+esc(t('cat_title'))+'</h1></div></div>'
+      +'<div class="sk-row" aria-hidden="true">'+card+card+card+card+card+card+card+card+'</div>'+status+'</section>';
+  }
+  return '<section class="hero"><div class="hero-in pad"><h1 class="hero-h1"><span class="sr">'+esc(t('h1_sr'))+'</span><span aria-hidden="true">'+(a?esc(a)+' ':'')+'<span class="flip">'+esc(t(FLIP_WORDS[0]))+'</span><br>'+esc(t('h1_b'))+'</span></h1>'
+    +'<a class="btn" style="margin-top:clamp(16px,2vw,26px)" href="#/catalogue">'+t('hero_cta')+IC.arrow+'</a></div>'
+    +'<div class="sk-hero" aria-hidden="true">'+card+card+card+card+card+card+card+'</div></section>'
+    +marquee()
+    +'<section class="sec"><div class="sec-in pad w-lg"><div class="sk-row" aria-hidden="true">'+card+card+card+card+'</div></div></section>'
+    +status;
+}
+function emptyState(){
+  return '<section class="sec"><div class="sec-in pad w-lg"><div class="empty">'
+    +'<h2 class="sec-h">'+esc(t('cat_off'))+'</h2><p>'+esc(t('cat_off_p'))+'</p>'
+    +'<button class="btn soft" type="button" data-retry>'+esc(t('retry'))+'</button></div></div></section>';
+}
 function viewHome(){
   const SLOTS=FAN_SLOTS, CENTER_OUT=[3,2,4,1,5,0,6];
   const a=t('h1_a');
@@ -1958,6 +2014,7 @@ function viewHome(){
   const popular=pop.length?pop:ITEMS.slice(0,4);
   const soon=SOON.length?'<section class="sec"><div class="sec-in pad w-lg"><div class="sec-top"><h2 class="sec-h">'+t('sec_soon')+'</h2><a class="lnk" href="#/catalogue?type=manga">'+t('all_manga')+IC.arrow+'</a></div><div class="row four">'
     +SOON.map(s=>'<article class="card soon"><div class="c-img">'+cover({title:s.name,vol:null,style:s.style,a:s.a,b:s.b,img:s.img})+'<span class="pillb y">'+t('soon')+'</span></div><div class="c-body"><h3 class="c-t">'+esc(s.name)+'</h3></div></article>').join('')+'</div></div></section>':'';
+  if(!ITEMS.length) return hero+marquee()+emptyState();
   return hero+marquee()
    +rowSec('sec_popular',popular,{href:'#/catalogue',tag:'tag_popular',title:'all_popular'})
     +(HOMESEC.promo?rowSec('sec_promo',pick(i=>i.old),{href:'#/catalogue?promo=1',tag:'tag_promo',title:'all_promo'}):'')
@@ -2034,6 +2091,10 @@ function viewCatalogue(){
    +'<button class="fclear" type="button" id="freset">'+t('reset')+'</button></div></div>'
    +'<div class="cat-body"><div class="grid" id="cgrid"></div><div class="more" id="cmoreW"><button class="btn soft" type="button" id="cmore">'+t('load_more')+'</button></div></div>'
    +'</section>';
+}
+/* Aucun produit (serveur injoignable et pas de cache) : état vide propre. */
+function emptyCat(){
+  return '<section class="page pad w-xl"><div class="cat-head"><div><h1>'+esc(catHead().title)+'</h1></div></div>'+emptyState()+'</section>';
 }
 function activeChips(){
   const a=[];
@@ -2976,11 +3037,17 @@ function render(){
   document.body.classList.remove('flock');
   document.body.classList.toggle('adm',isAd);
   document.title=isAd?'Admin \u2014 '+STORE.name:t('title');
+  /* Premier chargement sans cache : squelette, jamais le catalogue de démo. */
+  if(!isAd && !BOOTED && !HAS_CACHE){
+    $('#app').innerHTML=viewSkeleton();
+    renderFoot(); updateHdr(); applySeo();
+    return;
+  }
   if(isAd){
     if(!ordSynced){ ordSynced=true; syncOrders().then(()=>{ const q=route.path; if(q==='/admin'||q.indexOf('/admin/')===0) render(); }); }
     html=admView(p);
   }
-  else if(p==='/catalogue'){ if(!F) F=newF(route.q); html=viewCatalogue(); }
+  else if(p==='/catalogue'){ if(!F) F=newF(route.q); html=(!ITEMS.length&&BOOTED)?emptyCat():viewCatalogue(); }
   else if(p==='/cart') html=viewCart();
   else if(p==='/checkout') html=viewCheckout();
   else if(p==='/favorites') html=viewFavs();
@@ -3172,6 +3239,7 @@ document.addEventListener('keydown',e=>{
 applyLang();
 sync();
 refreshAll();
+document.addEventListener('click',e=>{ if(e.target.closest('[data-retry]')){ e.preventDefault(); refreshAll(); } });
 pushPendingOrders().catch(()=>{});
 window.addEventListener('online',()=>{ pushPendingOrders().catch(()=>{}); refreshAll(); });
 })();

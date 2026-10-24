@@ -19,9 +19,16 @@ const { ready: dbReady, query } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.disable('x-powered-by');
+/* Les pages et les API doivent toujours refléter l'état réel du serveur :
+   jamais de HTML/JSON périmé en cache (navigateur, proxy, CDN). */
+const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0', 'Pragma': 'no-cache', 'Expires': '0' };
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use('/api', (req, res, next) => { res.set(NO_CACHE); next(); });
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -37,7 +44,14 @@ app.use('/api/stock', stockRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
-app.use(express.static(path.join(__dirname), { index: 'index.html' }));
+app.use(express.static(path.join(__dirname), {
+  index: 'index.html',
+  setHeaders(res, filePath) {
+    /* HTML : jamais mis en cache, sinon un visiteur peut recevoir une ancienne
+       version du site après une mise à jour. */
+    if (/\.html?$/i.test(filePath)) res.set(NO_CACHE);
+  }
+}));
 
 const PUBLIC = process.env.PUBLIC_URL || 'https://raystore.space';
 const OG_IMG = PUBLIC + '/p/og-banner.png?v=4';
@@ -50,7 +64,22 @@ const DEFAULT_SEO = {
   img: OG_IMG,
   ld: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'RayStore', url: PUBLIC + '/' }
 };
-let seoCache = null;
+let seoCache = null, seoCacheMtime = 0;
+/* Relit index.html si le fichier a changé : une mise à jour du site est servie
+   immédiatement, sans redémarrer le serveur ni garder l'ancienne version. */
+function readIndexHtml() {
+  const file = path.join(__dirname, 'index.html');
+  try {
+    const st = fs.statSync(file);
+    if (!seoCache || st.mtimeMs !== seoCacheMtime) {
+      seoCache = fs.readFileSync(file, 'utf8');
+      seoCacheMtime = st.mtimeMs;
+    }
+  } catch (e) {
+    if (!seoCache) seoCache = fs.readFileSync(file, 'utf8');
+  }
+  return seoCache;
+}
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -209,14 +238,14 @@ app.get('/sitemap.xml', async (req, res, next) => {
 app.get('*', async (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
   try {
-    if (!seoCache) seoCache = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
     const seo = await buildSeo(req);
-    const html = seoCache
+    const html = readIndexHtml()
       .replace(/<!--SEO-START-->[\s\S]*?<!--SEO-END-->/, () => seoBlock(seo))
       .replace(/<title>[\s\S]*?<\/title>/, () => '<title>' + esc(seo.title) + '</title>');
-    res.status(200).type('html').send(html);
+    res.status(200).type('html').set(NO_CACHE).send(html);
   } catch (e) {
     console.error('[seo]', e.message);
+    res.set(NO_CACHE);
     res.sendFile(path.join(__dirname, 'index.html'), (err) => { if (err) next(); });
   }
 });
