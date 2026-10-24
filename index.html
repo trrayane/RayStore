@@ -66,6 +66,12 @@
    defaut) : sans ca, tout ce qui est dans un <details> heritait de content-box. */
 details::details-content{box-sizing:border-box}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 110px);-webkit-text-size-adjust:100%}
+/* Barres de defilement : on masque le selecteur (fleches + piste), le scroll reste actif. */
+html{scrollbar-width:none;-ms-overflow-style:none}
+html::-webkit-scrollbar{width:0;height:0}
+*,*::before,*::after{scrollbar-width:none;-ms-overflow-style:none}
+*::-webkit-scrollbar{width:0;height:0;display:none}
+*::-webkit-scrollbar-track,*::-webkit-scrollbar-thumb,*::-webkit-scrollbar-button{display:none;background:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
 html[dir="rtl"] *{letter-spacing:0!important}
 a{color:inherit}
