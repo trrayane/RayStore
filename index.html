@@ -308,12 +308,7 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .sel{height:46px;border:1.5px solid var(--line);border-radius:var(--r16);background:var(--hi);padding:0 14px;font-weight:700;max-width:100%;transition:border-color var(--snap),box-shadow var(--snap)}
 .cat-body{display:block;margin-top:0}
 /* ---- Barre de filtres : catégories + panneau déroulant ---- */
-.fbar{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:22px}
-.fpills{display:flex;flex-wrap:wrap;gap:6px;overflow:visible;flex:1 1 0;min-width:0;padding:2px}
-.fpill{flex:none;height:40px;padding:0 16px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:-.01em;color:var(--ink);cursor:pointer;transition:background var(--snap),color var(--snap),border-color var(--snap)}
-.fpill:hover{border-color:var(--ink)}
-.fpill[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-.fpill[data-f="promo"][aria-pressed="true"]{background:var(--pri);border-color:var(--pri)}
+.fbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:22px}
 .fbar-act{display:flex;align-items:center;gap:8px;flex:none}
 .fpanel{position:relative}
 .fpanel>summary{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);font-family:var(--disp);font-weight:700;font-size:12.5px;cursor:pointer;list-style:none;user-select:none;transition:border-color var(--snap),background var(--snap)}
@@ -337,7 +332,6 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .fpanel-h{display:none}
 @media (max-width:639px){
   .fbar{gap:8px}
-  .fpill{height:36px;padding:0 12px;font-size:12px}
   .fbar-act{width:100%;justify-content:space-between}
   .fpanel-b{position:fixed;inset-inline:12px;bottom:12px;top:auto;width:auto;max-height:72vh;overflow-y:auto;overflow-x:clip;grid-template-columns:1fr;gap:16px;z-index:80}
   .fpanel-b>*{min-width:0;max-width:100%}
@@ -2068,12 +2062,10 @@ function catHead(){
 function viewCatalogue(){
   const sortOpts=['new','lo','hi','az'].map(s=>'<option value="'+s+'"'+(F.sort===s?' selected':'')+'>'+t('sort_'+s)+'</option>').join('');
   const serOpts='<option value="all">'+t('all_series')+'</option>'+SERIES.map(s=>'<option value="'+s.k+'"'+(F.series===s.k?' selected':'')+'>'+esc(s.name)+'</option>').join('');
-  const pills=[['all',t('all')],['manga',t('ty_manga')],['manhwa',t('ty_manhwa')],['novel',t('ty_novel')],['goods',t('ty_goods')]]
-    .map(p=>'<button class="fpill" type="button" data-f="type" data-v="'+p[0]+'" aria-pressed="false">'+p[1]+'</button>').join('');
   return '<section class="page pad w-xl"><div class="cat-head"><div><h1 id="chTitle">'+catHead().title+'</h1><p class="sr" aria-live="polite"><b id="ccount"></b></p></div></div>'
    +'<div class="cat-tools"><div class="sbar">'+IC.search+'<input type="search" id="cq" value="'+esc(F.q)+'" placeholder="'+t('cq_ph')+'" aria-label="'+t('cq_ph')+'" autocomplete="off"></div>'
    +'<select class="sel" id="csort" aria-label="'+t('sort_aria')+'">'+sortOpts+'</select></div>'
-   +'<div class="fbar"><div class="fpills">'+pills+'<button class="fpill" type="button" data-f="promo" data-v="1" aria-pressed="false">'+t('nav_promo')+'</button></div>'
+   +'<div class="fbar">'
    +'<div class="fbar-act"><details class="fpanel" id="fpanel"><summary>'+t('filters')+'<span class="fcount" id="fcount">0</span>'+IC.down+'</summary>'
     +'<div class="fpanel-b">'
      +'<div class="fpanel-h"><b>'+t('filters')+'</b><button class="fclose" type="button" id="fclose" aria-label="'+t('sm_close')+'"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
