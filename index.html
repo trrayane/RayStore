@@ -163,9 +163,7 @@ html[dir="rtl"] .lnk:hover svg{transform:scaleX(-1) translateX(5px)}
 .fc:hover{border-color:var(--pri);box-shadow:var(--e4);filter:brightness(1.06)}
 .fc:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 .fc:active{filter:brightness(.94)}
-.ghosts{position:absolute;inset:0;z-index:1;pointer-events:none;-webkit-mask-image:linear-gradient(to bottom,transparent 10%,#000 62%);mask-image:linear-gradient(to bottom,transparent 10%,#000 62%)}
-.gh{position:absolute;bottom:0;background:linear-gradient(var(--gh-a),var(--gh-b));border-radius:12px 12px 0 0;overflow:hidden;display:flex;justify-content:center;padding-top:14px;font-family:"Noto Sans JP","Yu Gothic","Hiragino Sans",sans-serif;font-weight:900;color:var(--gh-k);font-size:clamp(34px,7vw,120px);line-height:1;writing-mode:vertical-rl;opacity:.75}
-@media (max-width:639px){.hero{--cw:38vw}.gh:nth-child(n+5){display:none}}
+@media (max-width:639px){.hero{--cw:38vw}}
 
 /* ===== Marquee band ===== */
 .mq{background:var(--mag);color:#fff;overflow:hidden;direction:ltr;padding:14px 0;position:relative;z-index:3}
@@ -793,7 +791,7 @@ img,video,svg{max-width:100%}
   .tools{gap:6px;justify-self:end}
   .rb,.pill{width:40px;height:40px}
   .pill{width:auto;min-width:44px;padding:0 10px;font-size:12px}
-  .nav{display:grid;grid-template-columns:repeat(5,auto);justify-content:space-between;
+  .nav{display:grid;grid-template-columns:repeat(4,auto);justify-content:space-between;
        overflow:visible;margin-inline:calc(var(--pad) * -.5);padding-inline:0}
   .nav a{padding:10px 6px;font-size:14px;text-align:center;white-space:nowrap}
   .nav a::after{inset-inline:6px}
@@ -1059,18 +1057,18 @@ img,video,svg{max-width:100%}
   /* le menu devient un panneau sous l'en-tête */
   .nav{
     position:absolute;top:100%;inset-inline:0;z-index:2;
-    display:flex;flex-direction:column;gap:2px;justify-self:auto;grid-column:auto;order:0;
+    display:flex;flex-direction:column;gap:0;justify-self:auto;grid-column:auto;order:0;
     overflow:visible;margin:0;
-    padding:10px max(var(--pad),env(safe-area-inset-left,0px)) 14px;
+    padding:6px max(var(--pad),env(safe-area-inset-left,0px)) 10px;
     background:var(--surface);border-bottom:1px solid var(--line);
     border-radius:0 0 var(--r20) var(--r20);box-shadow:var(--e4);
     visibility:hidden;opacity:0;transform:translateY(-10px);pointer-events:none;
     transition:opacity var(--snap),transform var(--move) var(--spring),visibility 0s linear var(--move);
   }
   .hdr.menu-open .nav{visibility:visible;opacity:1;transform:none;pointer-events:auto;transition-delay:0s}
-  .nav a{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 14px;
-         font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--ink);
-         border-radius:12px;text-align:start;white-space:normal}
+  .nav a{display:flex;align-items:center;justify-content:space-between;min-height:42px;padding:0 10px;
+         font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:-.01em;color:var(--ink);
+         border-radius:10px;text-align:start;white-space:normal}
   .nav a::after{content:"";position:static;inset:auto;width:9px;height:9px;height:9px;border-radius:50%;background:transparent;transform:none;
                 transition:background var(--snap),transform var(--move) var(--spring)}
   .nav a:hover{background:var(--hi)}
@@ -1084,8 +1082,8 @@ img,video,svg{max-width:100%}
   .hdr.menu-open::after{opacity:1;visibility:visible;transition-delay:0s}
 }
 @media (max-width:639px){
-  .nav{padding:8px 10px 12px}
-  .nav a{min-height:46px;font-size:14.5px;padding:0 12px}
+  .nav{padding:4px 8px 8px}
+  .nav a{min-height:42px;font-size:14px;padding:0 10px}
   .hdr-in{padding-top:8px;padding-bottom:8px}
 }
 @media (min-width:1024px){ .hdr::after{display:none} }
@@ -1324,26 +1322,26 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
 .nav-lang{display:none}
 @media (max-width:1023px){
   #btnLang{display:none}
-  .nav-lang{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;margin-top:6px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--hi);color:var(--ink);font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:-.01em;text-align:start;cursor:pointer;transition:background var(--snap),transform var(--move) var(--spring)}
+  .nav-lang{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:42px;margin-top:4px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--hi);color:var(--ink);font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:-.01em;text-align:start;cursor:pointer;transition:background var(--snap),transform var(--move) var(--spring)}
   .nav-lang:active{transform:scale(.97)}
-  .nav-lang .nl-pill{display:inline-grid;place-items:center;min-width:44px;height:30px;padding:0 10px;border-radius:999px;background:var(--mag);color:#fff;font-family:var(--mono);font-weight:700;font-size:12px}
+  .nav-lang .nl-pill{display:inline-grid;place-items:center;min-width:40px;height:28px;padding:0 9px;border-radius:999px;background:var(--mag);color:#fff;font-family:var(--mono);font-weight:700;font-size:11.5px}
   .nav-lang:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
   html[dir="rtl"] .nav-lang .nl-name{letter-spacing:0}
-  /* le nom de la boutique reste toujours visible */
-  .hdr .logo-t,.logo-t{display:inline}
+  /* le nom de la boutique reste visible */
   .hdr .logo{min-width:0;flex:1 1 auto}
-  .hdr .logo-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr .logo-t{display:inline;white-space:nowrap}
 }
 @media (max-width:639px){
-  .hdr .logo-t{font-size:19px}
-  .hdr .tools{gap:6px}
-}
-@media (max-width:379px){
-  .hdr .logo-t{font-size:16px}
-  .hdr .logo{gap:6px}
-  .hdr .logo img{width:32px;height:32px}
+  .hdr .logo-t{font-size:17px}
   .hdr .tools{gap:4px}
-  .hdr .rb{width:36px;height:36px}
+  .hdr .rb{width:38px;height:38px}
+}
+@media (max-width:429px){
+  .hdr .logo-t{font-size:15px}
+  .hdr .logo{gap:6px}
+  .hdr .logo img{width:30px;height:30px}
+  .hdr .tools{gap:3px}
+  .hdr .rb{width:34px;height:34px}
 }
 
 /* =====================================================================
@@ -1410,20 +1408,20 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
 /* Les rangées produits restent gauche→droite même en arabe */
 html[dir="rtl"] .row{direction:ltr}
 html[dir="rtl"] .row>*{direction:rtl}
-.pd-tabs{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
-.pd-tab{appearance:none;display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);font-family:var(--disp);font-weight:800;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);cursor:pointer;transition:background var(--snap),color var(--snap),border-color var(--snap),transform var(--move) var(--spring)}
-.pd-tab:hover{border-color:var(--ink)}
-.pd-tab:active{transform:scale(.96)}
-.pd-tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-.pd-panel{margin-top:16px;border-radius:var(--r20);background:var(--hi);padding:22px 24px}
+.pd-tabs{display:flex;gap:26px;margin-top:10px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.pd-tab{appearance:none;position:relative;background:none;border:0;padding:12px 0;font-family:var(--disp);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:color var(--snap)}
+.pd-tab:hover{color:var(--ink)}
+.pd-tab[aria-selected="true"]{color:var(--ink)}
+.pd-tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;border-radius:2px;background:var(--ink)}
+.pd-panel{margin-top:0;padding:20px 0 0;background:none;border:0;border-radius:0}
 .pd-panel[hidden]{display:none}
-.pd-panel .pd-desc{margin:0;color:var(--ink);line-height:1.8;max-width:65ch;overflow-wrap:anywhere}
+.pd-panel .pd-desc{margin:0;color:var(--ink);line-height:1.75;max-width:65ch;overflow-wrap:anywhere;border:0;padding:0}
 .pd-panel dl{display:grid;grid-template-columns:minmax(110px,200px) 1fr;gap:0;margin:0}
 .pd-panel dt{color:var(--muted);font-size:13.5px;font-weight:600;padding:11px 0;border-bottom:1px solid var(--line)}
 .pd-panel dd{margin:0;font-weight:700;padding:11px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 .pd-panel dt:nth-last-of-type(1),.pd-panel dd:nth-last-of-type(1){border-bottom:0}
 .pd-panel dd[style]{color:var(--err)!important}
-@media (max-width:639px){.pd-tabs{gap:8px}.pd-tab{flex:1;padding:0 10px;font-size:11.5px}.pd-panel{padding:16px}.pd-panel dl{grid-template-columns:1fr}.pd-panel dt{padding-bottom:2px;border-bottom:0;font-size:12px}.pd-panel dd{padding:0 0 12px}}
+@media (max-width:639px){.pd-tabs{gap:22px}.pd-tab{font-size:11px}.pd-panel{padding:16px 0 0}.pd-panel dl{grid-template-columns:1fr}.pd-panel dt{padding-bottom:2px;border-bottom:0;font-size:12px}.pd-panel dd{padding:0 0 12px}}
 @media (max-width:560px){.pd .acts .btn.atc{order:3;flex:1 1 100%}}
 </style>
 </head>
@@ -1439,7 +1437,6 @@ html[dir="rtl"] .row>*{direction:rtl}
       <a href="#/catalogue" data-nav="catalogue" data-i18n="nav_catalogue"></a>
       <a href="#/catalogue?type=manga" data-nav="manga" data-i18n="nav_manga"></a>
       <a href="#/catalogue?type=novel" data-nav="novel" data-i18n="nav_novel"></a>
-      <a href="#/catalogue?promo=1" data-nav="promo" data-i18n="nav_promo"></a>
       <a href="#/catalogue?type=goods" data-nav="goods" data-i18n="nav_goods"></a>
       <button class="nav-lang" id="btnLangM" type="button"><span class="nl-name"></span><span class="nl-pill"></span></button>
     </nav>
@@ -1956,12 +1953,11 @@ function fanTurn(fc){
 }
 function viewHome(){
   const SLOTS=FAN_SLOTS, CENTER_OUT=[3,2,4,1,5,0,6];
-  const GH=[[0,'呪',13,64],[9,'進',10,74],[18,'鬼',11,54],[28,'魂',9,60],[66,'漫',9,52],[75,'刃',11,72],[85,'画',10,60],[93,'風',9,68]];
   const a=t('h1_a');
   const fp=mkPool(HERO).slice(0,7);
   const idx=fp.length===7?[0,1,2,3,4,5,6]:CENTER_OUT.slice(0,fp.length);
    const fan=fp.length?'<div class="fan">'+fp.map((it,i)=>{ const f=SLOTS[idx[i]]; return '<div class="fc" data-slot="'+idx[i]+'" data-id="'+esc(it.id)+'" role="button" tabindex="0" aria-label="'+esc(itemTitle(it))+'" style="--dx:'+f[0]+';--dy:'+f[1]+';--r:'+f[2]+'deg;--z:'+f[3]+'">'+itemCover(it,1)+'</div>'; }).join('')+'</div>':'';
-  const hero='<section class="hero"><div class="ghosts" aria-hidden="true">'+GH.map(g=>'<div class="gh" style="left:'+g[0]+'%;width:'+g[2]+'%;height:'+g[3]+'%">'+g[1]+'</div>').join('')+'</div>'
+  const hero='<section class="hero">'
     +'<div class="hero-in pad"><h1 class="hero-h1"><span class="sr">'+esc(t('h1_sr'))+'</span><span aria-hidden="true">'+(a?esc(a)+' ':'')+'<span class="flip" id="flipw">'+esc(t(FLIP_WORDS[0]))+'</span><br>'+esc(t('h1_b'))+'</span></h1>'
     +'<a class="btn" style="margin-top:clamp(16px,2vw,26px)" href="#/catalogue">'+t('hero_cta')+IC.arrow+'</a></div>'+fan+'</section>';
   const pick=(fn,n=4)=>ITEMS.filter(fn).slice(0,n);
