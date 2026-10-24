@@ -309,8 +309,7 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .cat-body{display:block;margin-top:0}
 /* ---- Barre de filtres : catégories + panneau déroulant ---- */
 .fbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:22px}
-.fpills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 auto;min-width:0;padding:2px}
-.fpills::-webkit-scrollbar{display:none}
+.fpills{display:flex;flex-wrap:wrap;gap:6px;overflow:visible;flex:1 1 0;min-width:0;padding:2px}
 .fpill{flex:none;height:40px;padding:0 16px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:-.01em;color:var(--ink);cursor:pointer;transition:background var(--snap),color var(--snap),border-color var(--snap)}
 .fpill:hover{border-color:var(--ink)}
 .fpill[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
@@ -338,7 +337,6 @@ html[dir="rtl"] .circ svg{transform:scaleX(-1)}
 .fpanel-h{display:none}
 @media (max-width:639px){
   .fbar{gap:8px}
-  .fpills{flex-wrap:wrap;overflow:visible;gap:6px}
   .fpill{height:36px;padding:0 12px;font-size:12px}
   .fbar-act{width:100%;justify-content:space-between}
   .fpanel-b{position:fixed;inset-inline:12px;bottom:12px;top:auto;width:auto;max-height:72vh;overflow-y:auto;overflow-x:clip;grid-template-columns:1fr;gap:16px;z-index:80}
