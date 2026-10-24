@@ -1393,12 +1393,7 @@ select:not(.cs-native){-webkit-appearance:none;appearance:none;cursor:pointer;fo
 .co-rem input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--mag);cursor:pointer}
 @media (max-width:560px){.co-2{grid-template-columns:1fr}.co-line .th{width:44px;height:64px}}
 
-/* ===== Fiche produit — fil d'Ariane, tags, onglets, stock ===== */
-.crumbs{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:20px;overflow-wrap:anywhere}
-.crumbs a{color:var(--muted);text-decoration:none}
-.crumbs a:hover{color:var(--pri);text-decoration:underline}
-.crumbs i{font-style:normal;opacity:.45}
-.crumbs span{color:var(--ink);font-weight:700}
+/* ===== Fiche produit — tags, onglets, stock ===== */
 .tag{display:inline-flex;align-items:center;padding:6px 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--hi);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow-wrap:anywhere}
 .pd .acts{flex-wrap:wrap;align-items:center}
 .pd .acts .btn.atc{flex:1 1 auto;min-width:180px}
@@ -2093,7 +2088,6 @@ function viewProduct(id){
     ?'<button class="btn atc" type="button" id="pdAdd" disabled aria-disabled="true"><span class="atc-i">'+IC.cart+'</span><span class="atc-l">'+t('oos')+'</span></button>'
     :'<button class="btn atc" type="button" id="pdAdd" data-add="'+it.id+'" data-price="'+it.price+'" data-max="'+max+'"><span class="atc-i">'+IC.cart+'</span><span class="atc-l">'+t('p_add')+' \u2014 '+fmt(it.price)+'</span><span class="atc-ok" aria-hidden="true">'+ICK+t('p_added')+'</span></button>';
   return '<section class="page pad w-lg">'
-   +'<nav class="crumbs" aria-label="'+t('cr_nav')+'"><a href="#/">'+t('cr_home')+'</a><i>/</i><a href="#/catalogue">'+t('cat_title')+'</a><i>/</i><span aria-current="page">'+esc(itemTitle(it))+'</span></nav>'
    +'<div class="pd"><div class="pd-c">'+itemCover(it)+'</div><div><p class="c-ser">'+esc(serTag(it))+'</p><h1>'+esc(itemTitle(it))+'</h1>'
    +'<p class="pr">'+(it.old?'<s>'+fmt(it.old)+'</s>':'')+'<b>'+fmt(it.price)+'</b></p>'
    +'<p class="hint" style="margin:2px 0 10px'+(oos?';color:#c0392b;font-weight:700':'')+'">'+stockLine+'</p>'
