@@ -185,8 +185,8 @@ const defaults = {
   store_name: 'raystore',
   store_whatsapp: '213000000000',
   store_instagram: 'https://www.instagram.com/',
-  ship_home: 700,
-  ship_stopdesk: 550,
+  ship_home: 700,   // tarif de base domicile, DA — à ajuster sur le contrat transporteur
+  ship_stopdesk: 550, // tarif de base stopdesk, DA — à ajuster sur le contrat transporteur
   homesec_promo: 1,
   homesec_manga: 1,
   homesec_manhwa: 1,
