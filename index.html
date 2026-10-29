@@ -1483,22 +1483,28 @@ html[dir="rtl"] .row>*{direction:rtl}
 /* ================= À PERSONNALISER ================= */
 const STORE = { name:'raystore', whatsapp:'213000000000', instagram:'https://www.instagram.com/' }; // WhatsApp : format international sans +
 const ADMIN = { pass:'1234' }; // mot de passe de l’admin (modifiable ensuite dans Admin > Paramètres)
-const SHIP  = { home:700, stopdesk:550 }; // tarif de base par mode, DA (à confirmer avec le contrat transporteur)
+const SHIP  = { home:600, stopdesk:500 }; // tarif de base (départ Alger), DA — barème Yalidine e-commerce public (à ajuster sur ton contrat)
 const PAGE  = 12;
 
-/* Les 58 wilayas, dans l'ordre officiel :
-   décret 84-79 du 3 avril 1984 (JORADP, noms et numérotation des 48 wilayas d'origine)
-   complété par le décret présidentiel n° 21-117 du 22 mars 2021 (JORADP n° 22, 25 mars 2021)
-   pour les wilayas 49 à 58. Orthographe d'usage : Tamanrasset (JO : Tamenghasset),
-   El M'Ghair (JO : El M'Ghaier), El Meniaa (JO : El Meniaâ). */
+/* Les 69 wilayas, dans l'ordre officiel :
+   wilayas 1–48 : décret n° 84-79 du 3 avril 1984 (JORADP) ;
+   wilayas 49–58 : décret présidentiel n° 21-117 du 22 mars 2021 (JORADP n° 22) ;
+   wilayas 59–69 : loi n° 26-06 du 4 avril 2026 + décret présidentiel n° 26-206 du 25 mai 2026 (JORADP n° 40).
+   Jusqu'au 31 décembre 2026, une nouvelle wilaya reste administrée par sa mère :
+   59 Aflou→Laghouat · 60 Barika→Batna · 61 El Kantara→Biskra · 62 Bir El Ater→Tébessa · 63 El Aricha→Tlemcen ·
+   64 Ksar Chellala→Tiaret · 65 Aïn Ouessara→Djelfa · 66 Messaad→Djelfa · 67 Ksar El Boukhari→Médéa ·
+   68 Bou Saâda→M'Sila · 69 El Abiodh Sidi Cheikh→El Bayadh (cf. NEW_OF_WILAYAS ci-dessous). */
 const WILAYAS = [
   'Adrar','Chlef','Laghouat','Oum El Bouaghi','Batna','Béjaïa','Biskra','Béchar','Blida','Bouira',
   'Tamanrasset','Tébessa','Tlemcen','Tiaret','Tizi Ouzou','Alger','Djelfa','Jijel','Sétif','Saïda',
   'Skikda','Sidi Bel Abbès','Annaba','Guelma','Constantine','Médéa','Mostaganem','M’Sila','Mascara','Ouargla',
   'Oran','El Bayadh','Illizi','Bordj Bou Arréridj','Boumerdès','El Tarf','Tindouf','Tissemsilt','El Oued','Khenchela',
   'Souk Ahras','Tipaza','Mila','Aïn Defla','Naâma','Aïn Témouchent','Ghardaïa','Relizane','Timimoun','Bordj Badji Mokhtar',
-  'Ouled Djellal','Béni Abbès','In Salah','In Guezzam','Touggourt','Djanet','El M’Ghair','El Meniaa'
+  'Ouled Djellal','Béni Abbès','In Salah','In Guezzam','Touggourt','Djanet','El M’Ghair','El Meniaa',
+  'Aflou','Barika','El Kantara','Bir El Ater','El Aricha','Ksar Chellala','Aïn Ouessara','Messaad','Ksar El Boukhari','Bou Saada','El Abiodh Sidi Cheikh'
 ];
+/* Wilaya mère de chaque nouvelle wilaya (59–69), le temps de la période transitoire (fin le 31/12/2026). */
+const NEW_OF_WILAYAS = { 59:3, 60:5, 61:7, 62:12, 63:13, 64:14, 65:17, 66:17, 67:26, 68:28, 69:32 };
 
 const DEMOS  = ['shonen','seinen','shojo','josei','isekai'];
 const GENRES = ['action','fantasy','romance','drama','horror','mystery','scifi','comedy','sport'];
@@ -1602,12 +1608,12 @@ fr:{
   nav_catalogue:'Catalogue', nav_manga:'Manga', nav_manhwa:'Manhwa', nav_novel:'Novels', nav_promo:'Promos', a_menu:'Navigation',
   a_search:'Rechercher', a_fav:'Favoris', a_cart:'Panier', a_lang:'العربية', lang_btn:'AR', a_wa:'Nous écrire sur WhatsApp', a_theme:'Changer de thème', f_admin:'Administration', m_ref:'Réf.',
   h1_a:'Tes', h1_b:'livrés en Algérie', h1_sr:'Tes manga, manhwa, novels et goodies livrés en Algérie', hero_cta:'Explorer la collection',
-  mq:'Volumes officiels|Livraison dans les 58 wilayas|Paiement à la livraison|Confirmation sur WhatsApp',
+  mq:'Volumes officiels|Livraison dans les 69 wilayas|Paiement à la livraison|Confirmation sur WhatsApp',
   sec_popular:'Séries populaires', sec_promo:'Promotions', sec_soon:'Prochaines sorties', sec_manga:'Nouveaux mangas', sec_manhwa:'Nouveaux manhwas', sec_novel:'Nouveaux novels',
   all_popular:'Voir toutes les séries', all_promo:'Voir toutes les promos', all_manga:'Voir tous les mangas', all_manhwa:'Voir tous les manhwas', all_novel:'Voir tous les novels',
   tag_popular:'Séries', tag_promo:'Promos', tag_manga:'Manga', tag_manhwa:'Manhwa', tag_novel:'Novels',
   all_note:'Parcours notre sélection complète de volumes officiels.', soon:'Bientôt', promo:'Promo', vol:'Tome', book:'Livre',
-  foot_tag:'Le manga, livré chez toi dans les 58 wilayas d\u2019Algérie.', f_shop:'Boutique', f_all:'Tous les volumes', f_promos:'Promotions', f_help:'Aide & infos', f_ship:'Livraison & paiement', f_contact:'Nous contacter', f_join:'Rejoins la communauté', f_copy:'Tous droits réservés.',
+  foot_tag:'Le manga, livré chez toi dans les 69 wilayas d\u2019Algérie.', f_shop:'Boutique', f_all:'Tous les volumes', f_promos:'Promotions', f_help:'Aide & infos', f_ship:'Livraison & paiement', f_contact:'Nous contacter', f_join:'Rejoins la communauté', f_copy:'Tous droits réservés.',
   cat_pill:'Volumes officiels', cat_pill_g:'Goodies officiels', cat_title:'Catalogue', cat_sub:'Trouve tes volumes officiels importés', cat_sub_g:'Trouve tes goodies préférés, importés et livrés chez toi', found:'trouvés',
   sort_new:'Plus récents', sort_lo:'Prix croissant', sort_hi:'Prix décroissant', sort_az:'A → Z', sort_aria:'Trier',
   filters:'Filtres', refine:'Affiner la sélection', reset:'Réinitialiser', genre:'Genre', all:'Tout', all_genres:'Tous les genres', language:'Langue', type:'Type', series:'Série', all_series:'Toutes les séries',
@@ -1638,12 +1644,12 @@ ar:{
   nav_catalogue:'الكتالوج', nav_manga:'مانجا', nav_manhwa:'مانهوا', nav_novel:'روايات', nav_promo:'العروض', a_menu:'التنقل',
   a_search:'بحث', a_fav:'المفضلة', a_cart:'السلة', a_lang:'Français', lang_btn:'FR', a_wa:'راسلنا على واتساب', a_theme:'تغيير المظهر', f_admin:'الإدارة', m_ref:'المرجع',
   h1_a:'', h1_b:'تصلك في الجزائر', h1_sr:'مانجا ومانهوا وروايات ومقتنيات تصلك في الجزائر', hero_cta:'استكشف المجموعة',
-  mq:'مجلدات أصلية|توصيل إلى 58 ولاية|الدفع عند الاستلام|التأكيد عبر واتساب',
+  mq:'مجلدات أصلية|توصيل إلى 69 ولاية|الدفع عند الاستلام|التأكيد عبر واتساب',
   sec_popular:'سلاسل رائجة', sec_promo:'العروض', sec_soon:'قريبًا', sec_manga:'مانجا جديدة', sec_manhwa:'مانهوا جديدة', sec_novel:'روايات جديدة',
   all_popular:'كل السلاسل', all_promo:'كل العروض', all_manga:'كل المانجا', all_manhwa:'كل المانهوا', all_novel:'كل الروايات',
   tag_popular:'سلاسل', tag_promo:'عروض', tag_manga:'مانجا', tag_manhwa:'مانهوا', tag_novel:'روايات',
   all_note:'تصفّح مجموعتنا الكاملة من المجلدات الأصلية.', soon:'قريبًا', promo:'عرض', vol:'المجلد', book:'الكتاب',
-  foot_tag:'المانجا تصلك إلى بيتك في ولايات الجزائر الـ 58.', f_shop:'المتجر', f_all:'كل المجلدات', f_promos:'العروض', f_help:'مساعدة ومعلومات', f_ship:'التوصيل والدفع', f_contact:'اتصل بنا', f_join:'انضم إلى المجتمع', f_copy:'جميع الحقوق محفوظة.',
+  foot_tag:'المانجا تصلك إلى بيتك في ولايات الجزائر الـ 69.', f_shop:'المتجر', f_all:'كل المجلدات', f_promos:'العروض', f_help:'مساعدة ومعلومات', f_ship:'التوصيل والدفع', f_contact:'اتصل بنا', f_join:'انضم إلى المجتمع', f_copy:'جميع الحقوق محفوظة.',
   cat_pill:'مجلدات أصلية', cat_pill_g:'مقتنيات أصلية', cat_title:'الكتالوج', cat_sub:'اعثر على مجلداتك الأصلية المستوردة', cat_sub_g:'اعثر على مقتنياتك المفضلة المستوردة', found:'نتيجة',
   sort_new:'الأحدث', sort_lo:'السعر: الأقل أولًا', sort_hi:'السعر: الأعلى أولًا', sort_az:'A → Z', sort_aria:'ترتيب',
   filters:'التصفية', refine:'حسّن اختيارك', reset:'إعادة ضبط', genre:'التصنيف', all:'الكل', all_genres:'كل التصنيفات', language:'اللغة', type:'الفئة', series:'السلسلة', all_series:'كل السلاسل',
@@ -1894,13 +1900,26 @@ window.CSIMG=(sel,o)=>{ const it=byId(o.value); return it?itemCover(it):null; };
 const serTag=it=>isGood(it.s.type)?t('ty_'+it.s.type):(it.s.name&&/tome/i.test(it.s.name)?it.s.name.replace(/\s*[—-]?\s*Tome\s*\d+.*/i,'').trim():serLabel(it.s));
 const cartCount=()=>Object.keys(cart).reduce((a,k)=>a+cart[k],0);
 const cartSum=()=>Object.keys(cart).reduce((a,k)=>a+byId(k).price*cart[k],0);
-/* Grille tarifaire de livraison (montants en DA, tarifs négociés avec le transporteur).
-   Principe : un tarif de base par mode (SHIP) + un supplément par zone :
-   0 = Centre (Alger, Blida, Boumerdès, Tipaza) · 1 = Plateau/Nord restant · 2 = Hautes-Plaines · 3 = Sud.
-   À relier au contrat transporteur : ajuster SHIP et ZONE_ADD, les wilayas sont déjà reparties ci-dessous. */
-const ZONE_ADD = { home:[0,150,250,500], stopdesk:[0,100,150,300] };
-const ZONE_SOUTH=[1,8,11,30,32,33,37,39,47,49,50,51,52,53,54,55,56,57,58], ZONE_PLAT=[3,4,7,12,14,17,20,22,28,29,40,45], ZONE_CENTER=[9,16,35,42];
-const shipZone=w=>{ w=Number(w)||16; return ZONE_CENTER.includes(w)?0:ZONE_SOUTH.includes(w)?3:ZONE_PLAT.includes(w)?2:1; };
+/* Grille tarifaire de livraison — barème Yalidine Express e-commerce (coût du colis ≤ 5 kg en DA, départ Alger 16).
+   SHIP = montant depuis Alger, ZONE_ADD = supplément par zone. À ajuster selon ton contrat Yalidine.
+   Zone 1 Couronne : Blida(9), Boumerdès(35), Tipaza(42) — 700/500
+   Zone 2 Nord (29 wilayas) : Chlef(2), Oum El Bouaghi(4), Batna(5), Béjaïa(6), Bouira(10), Tlemcen(13), Tiaret(14), Tizi Ouzou(15),
+     Jijel(18), Sétif(19), Saïda(20), Skikda(21), Sidi Bel Abbès(22), Annaba(23), Guelma(24), Constantine(25), Médéa(26), Mostaganem(27),
+     M'Sila(28), Mascara(29), Oran(31), Bordj Bou Arréridj(34), El Tarf(36), Tissemsilt(38), Khenchela(40), Souk Ahras(41), Mila(43),
+     Aïn Defla(44), Aïn Témouchent(46) — 900/650
+   Zone 3 Hautes plaines : Laghouat(3), Biskra(7), Tébessa(12), Djelfa(17), Ouargla(30), El Oued(39), Ghardaïa(47), Relizane(48), Ouled Djellal(51) — 1050/800
+   Zone 4 Sud profond : Adrar(1), Béchar(8), Touggourt(55), El M'Ghair(57), El Meniaa(58) — 1500/1200
+   Zone 5 Grand Sud : Tamanrasset(11), El Bayadh(32), Illizi(33), Tindouf(37), Timimoun(49), Bordj Badji Mokhtar(50), Béni Abbès(52),
+     In Salah(53), In Guezzam(54), Djanet(56) — 1700/1300 */
+const ZONE_ADD = { home:[0,100,300,450,900,1100], stopdesk:[0,0,150,300,700,800] };
+const ZONES = {
+  couronne:[9,35,42],
+  nord:[2,4,5,6,10,13,14,15,18,19,20,21,22,23,24,25,26,27,28,29,31,34,36,38,40,41,43,44,46],
+  hautesPlaines:[3,7,12,17,30,39,47,48,51],
+  sudProfond:[1,8,55,57,58],
+  grandSud:[11,32,33,37,49,50,52,53,54,56]
+};
+const shipZone=w=>{ w=Number(w)||16; w=NEW_OF_WILAYAS[w]||w; return w===16?0:ZONES.couronne.includes(w)?1:ZONES.nord.includes(w)?2:ZONES.hautesPlaines.includes(w)?3:ZONES.sudProfond.includes(w)?4:ZONES.grandSud.includes(w)?5:2; };
 const shipFor=(m,w)=>SHIP[m]+ZONE_ADD[m][shipZone(w===undefined?wilaya:w)];
 const shipCost=()=>shipFor(shipM);
 const fromP=v=>(lang==='ar'?'\u0627\u0628\u062a\u062f\u0627\u0621\u064b \u0645\u0646 ':'\u00c0 partir de ')+fmt(v);

@@ -185,8 +185,8 @@ const defaults = {
   store_name: 'raystore',
   store_whatsapp: '213000000000',
   store_instagram: 'https://www.instagram.com/',
-  ship_home: 700,   // tarif de base domicile, DA — à ajuster sur le contrat transporteur
-  ship_stopdesk: 550, // tarif de base stopdesk, DA — à ajuster sur le contrat transporteur
+  ship_home: 600,   // tarif de base domicile depuis Alger, DA — barème Yalidine public
+  ship_stopdesk: 500, // tarif de base stopdesk depuis Alger, DA — barème Yalidine public
   homesec_promo: 1,
   homesec_manga: 1,
   homesec_manhwa: 1,

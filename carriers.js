@@ -70,6 +70,24 @@ function pickArr(d) {
 
 /* ---------------- Yalidine ---------------- */
 
+/* Wilayas 59–69 (loi 26-06 / décret 26-206) : les API transporteurs ne les
+   reconnaissent pas encore, on expédie sous la wilaya mère jusqu'au 31/12/2026. */
+const WILAYA_PARENT = {
+  59: 'Laghouat', 60: 'Batna', 61: 'Biskra', 62: 'Tébessa', 63: 'Tlemcen',
+  64: 'Tiaret', 65: 'Djelfa', 66: 'Djelfa', 67: 'Médéa', 68: "M'Sila", 69: 'El Bayadh'
+};
+const WILAYA_PARENT_CODE = { 59: 3, 60: 5, 61: 7, 62: 12, 63: 13, 64: 14, 65: 17, 66: 17, 67: 26, 68: 28, 69: 32 };
+
+// Nom de wilaya à donner au transporteur : la mère si la wilaya est nouvelle, sinon le libellé tel quel.
+function shipWilaya(o) {
+  return WILAYA_PARENT[o.wilCode] || o.wilName;
+}
+
+// Code wilaya côté transporteur : le code mère quand la wilaya est nouvelle, sinon le code tel quel.
+function shipWilayaCode(o) {
+  return WILAYA_PARENT_CODE[o.wilCode] || o.wilCode;
+}
+
 function yalHeaders() {
   const c = cfg();
   return {
@@ -121,7 +139,7 @@ async function yalCreate(o, opts) {
     contact_phone: normPhoneLocal(o.phone),
     address: o.addr || o.com || '',
     to_commune_name: o.com || o.wilName,
-    to_wilaya_name: o.wilName,
+    to_wilaya_name: shipWilaya(o),
     product_list: o.summary,
     price: clamp(Math.round(o.total), 0, 150000),
     do_insurance: false,
@@ -160,9 +178,10 @@ async function yalTracking(tracking) {
 }
 
 async function yalStops(o) {
+  const aw = shipWilayaCode(o);
   let communeId = 0;
   try {
-    const cd = await yalGet('/communes/?wilaya_id=' + o.wilCode + '&page_size=500');
+    const cd = await yalGet('/communes/?wilaya_id=' + aw + '&page_size=500');
     const arr = pickArr(cd) || [];
     const hit = arr.find((x) => strip(x.name) === strip(o.com)) || arr.find((x) => strip(x.name).includes(strip(o.com)) && strip(o.com));
     if (hit) communeId = Number(hit.id) || 0;
@@ -217,8 +236,10 @@ async function zrTerritories() {
 
 async function zrResolveTerritory(o) {
   const t = await zrTerritories();
-  const wil = t.wilayas.find((x) => Number(x.code) === Number(o.wilCode)) || t.wilayas.find((x) => strip(x.name) === strip(o.wilName));
-  if (!wil) throw new Error('ZR Express : wilaya inconnue « ' + o.wilName + ' »');
+  const shipCode = shipWilayaCode(o);
+  const shipName = shipWilaya(o);
+  const wil = t.wilayas.find((x) => Number(x.code) === Number(shipCode)) || t.wilayas.find((x) => strip(x.name) === strip(shipName));
+  if (!wil) throw new Error('ZR Express : wilaya inconnue « ' + shipName + ' »');
   const communes = t.communes.filter((x) => x.parentId === wil.id);
   let district = null;
   if (o.com) {
