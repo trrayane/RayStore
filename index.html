@@ -1529,72 +1529,22 @@ const GI = {
   phonecase:'<svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><circle cx="10.5" cy="6" r="1.3"/><path d="M12 19h.01"/></svg>'
 };
 
-// Exemples : remplace par ton vrai stock. Ajoute img:'data:image/...' pour utiliser une vraie couverture.
-// art:'URL' (optionnel) = grand dessin au trait du personnage affiché en fond, en fondu, sur la page produit
-//   (PNG/JPG/WebP, idéalement noir sur fond blanc ou transparent). Sans art, la couverture est utilisée en fond.
-const SEED_SERIES = [
-  {k:'dn',   feat:true, name:'Death Note Black Edition', short:'Death Note', type:'manga', lang:'fr', genres:['shonen','mystery'], author:'Tsugumi Ohba, Takeshi Obata', price:7000, vols:[6,5,4], style:'manga', a:'#0a0a0a', b:'#4b4b4b'},
-  {k:'op',   name:'One Piece', type:'manga', lang:'fr', genres:['shonen','action','fantasy'], author:'Eiichiro Oda', price:1900, vols:[4,3,2,1], style:'manga', a:'#0b2a8f', b:'#3b8bff'},
-  {k:'ds',   name:'Demon Slayer', type:'manga', lang:'fr', genres:['shonen','action','fantasy'], author:'Koyoharu Gotouge', price:1500, old:2000, vols:[13,12], style:'manga', a:'#2a0a12', b:'#c8323c'},
-  {k:'mha',  name:'My Hero Academia', type:'manga', lang:'fr', genres:['shonen','action'], author:'Kohei Horikoshi', price:1500, old:2000, vols:[2,1], style:'manga', a:'#a30d18', b:'#ff5a3d'},
-  {k:'bhd',  name:'Burn the House Down', type:'manga', lang:'fr', genres:['seinen','drama','romance'], author:'Moyashi Fujisawa', price:1500, old:2000, vols:[2,1], style:'manga', a:'#5b3b7a', b:'#e8a7c4'},
-  {k:'tbhk', name:'Toilet Bound Hanako Kun', type:'manga', lang:'en', genres:['shonen','mystery','comedy'], author:'AidaIro', price:2500, vols:[21,20], style:'manga', a:'#c2185b', b:'#ff7ab0'},
-  {k:'jjk',  name:'Jujutsu Kaisen', type:'manga', lang:'en', genres:['shonen','action','fantasy'], author:'Gege Akutami', price:1800, vols:[3,2,1], style:'manga', a:'#1a1145', b:'#5b6cff'},
-  {k:'csm',  name:'Chainsaw Man', type:'manga', lang:'en', genres:['shonen','action','horror'], author:'Tatsuki Fujimoto', price:1800, vols:[2,1], style:'manga', a:'#a53b00', b:'#ff9a1f'},
-  {k:'aot',  name:'Attack on Titan', type:'manga', lang:'en', genres:['shonen','action','drama'], author:'Hajime Isayama', price:1800, vols:[3,2,1], style:'manga', a:'#2b1a0a', b:'#d9782a'},
-  {k:'ber',  name:'Berserk Deluxe', short:'Berserk', type:'manga', lang:'en', genres:['seinen','fantasy','horror'], author:'Kentaro Miura', price:4200, vols:[2,1], style:'manga', a:'#0e0e18', b:'#5a4b8a'},
-  {k:'sl',   name:'Solo Leveling', type:'manhwa', lang:'fr', genres:['action','fantasy'], author:'Chugong', price:7000, vols:[3,1], style:'manhwa', a:'#06111f', b:'#1e6fd0'},
-  {k:'smi',  name:'Sa Majesté l\u2019Idol', type:'manhwa', lang:'fr', genres:['shojo','romance','fantasy'], price:3500, vols:[5,2], style:'manhwa', a:'#3a2a6b', b:'#e8a0c8'},
-  {k:'tog',  name:'Tower of God', type:'manhwa', lang:'en', genres:['action','fantasy'], author:'SIU', price:3500, vols:[2,1], style:'manhwa', a:'#0d2b3d', b:'#2fb5c9'},
-  {k:'wk',   name:'Diary of a Wimpy Kid', short:'Wimpy Kid', type:'novel', lang:'en', genres:['comedy'], author:'Jeff Kinney', price:4000, vols:[11,6,5,4,2], label:'book', style:'novel', a:'#39505f', b:'#8fb0c4'},
-  {k:'sao',  name:'Sword Art Online', type:'novel', lang:'en', genres:['isekai','scifi','action'], author:'Reki Kawahara', price:2900, vols:[2,1], style:'novel', a:'#0b3a5c', b:'#38a3ff'},
-  {k:'ovl',  name:'Overlord', type:'novel', lang:'en', genres:['isekai','fantasy'], author:'Kugane Maruyama', price:3200, vols:[2,1], style:'novel', a:'#2b1140', b:'#9b59d0'},
-  {k:'asoiaf',feat:true, name:'A Song of Ice and Fire', short:'Ice and Fire', type:'novel', lang:'en', genres:['fantasy','drama'], author:'George R. R. Martin', price:4000, vols:[1], style:'novel', a:'#1d1a10', b:'#a58a3c'},
-  {k:'fgl', name:'Figurine Luffy Gear 5', short:'Figurine Luffy', type:'figurine', lang:'fr', genres:[], price:6500, vols:[1], style:'figurine', a:'#3b1a78', b:'#ff9a1f'},
-  {k:'fgz', name:'Figurine Zoro Wano', short:'Figurine Zoro', type:'figurine', lang:'fr', genres:[], price:5500, vols:[1], style:'figurine', a:'#0e3b2a', b:'#4ade80'},
-  {k:'psa', name:'Poster Attack on Titan A3', short:'Poster AOT', type:'poster', lang:'fr', genres:[], price:1200, vols:[1], style:'poster', a:'#2b1a0a', b:'#d9782a'},
-  {k:'tjk', name:'T-shirt Jujutsu Kaisen', short:'T-shirt JJK', type:'apparel', lang:'fr', genres:[], price:3200, vols:[1], style:'apparel', a:'#1a1145', b:'#5b6cff'},
-  {k:'pcs', name:'Porte-clés Chainsaw Man', short:'Porte-clés', type:'accessory', lang:'fr', genres:[], price:600, vols:[1], style:'accessory', a:'#a53b00', b:'#ff9a1f'},
-  {k:'tcg', name:'Pack de cartes à collectionner', short:'Pack cartes', type:'cards', lang:'fr', genres:[], price:1500, vols:[1], style:'cards', a:'#7a0c14', b:'#e63946'},
-  {k:'lds', name:'Lampe LED Demon Slayer', short:'Lampe LED', type:'deco', lang:'fr', genres:[], price:2800, vols:[1], style:'deco', a:'#2a0a12', b:'#c8323c'},
-  {k:'fgg', name:'Figurine Gojo Satoru', short:'Figurine Gojo', type:'figurine', lang:'fr', genres:[], price:7500, vols:[1], style:'figurine', a:'#1a1145', b:'#38a3ff'},
-  {k:'fgn', name:'Figurine Naruto Sage Mode', short:'Figurine Naruto', type:'figurine', lang:'fr', genres:[], price:6000, vols:[1], style:'figurine', a:'#a53b00', b:'#ffd23f'},
-  {k:'pds', name:'Poster Demon Slayer A3', short:'Poster Demon Slayer', type:'poster', lang:'fr', genres:[], price:1200, vols:[1], style:'poster', a:'#2a0a12', b:'#c8323c'},
-  {k:'pop', name:'Poster One Piece Wanted A3', short:'Poster One Piece', type:'poster', lang:'fr', genres:[], price:1200, vols:[1], style:'poster', a:'#0b2a8f', b:'#3b8bff'},
-  {k:'top', name:'T-shirt One Piece Jolly Roger', short:'T-shirt One Piece', type:'apparel', lang:'fr', genres:[], price:3200, vols:[1], style:'apparel', a:'#0b2a8f', b:'#3b8bff'},
-  {k:'hsn', name:'Hoodie Naruto Akatsuki', short:'Hoodie Akatsuki', type:'apparel', lang:'fr', genres:[], price:6500, vols:[1], style:'apparel', a:'#3a0a0a', b:'#e63946'},
-  {k:'pkn', name:'Porte-clés Naruto Konoha', short:'Porte-clés Naruto', type:'accessory', lang:'fr', genres:[], price:600, vols:[1], style:'accessory', a:'#a53b00', b:'#ff9a1f'},
-  {k:'tms', name:'Tapis de souris XL Berserk', short:'Tapis Berserk', type:'accessory', lang:'fr', genres:[], price:2200, vols:[1], style:'accessory', a:'#0e0e18', b:'#5a4b8a'},
-  {k:'pkc', name:'Pack de cartes Pokémon', short:'Cartes Pokémon', type:'cards', lang:'fr', genres:[], price:2500, vols:[1], style:'cards', a:'#b8860b', b:'#ffd23f'},
-  {k:'plk', name:'Peluche Pikachu 30 cm', short:'Peluche Pikachu', type:'plush', lang:'fr', genres:[], price:3500, vols:[1], style:'plush', a:'#b8860b', b:'#ffd23f'},
-  {k:'plt', name:'Peluche Totoro', short:'Peluche Totoro', type:'plush', lang:'fr', genres:[], price:4200, vols:[1], style:'plush', a:'#3a4a5a', b:'#9fb4c4'},
-  {k:'mgn', name:'Mug Naruto Akatsuki', short:'Mug Akatsuki', type:'mug', lang:'fr', genres:[], price:1800, vols:[1], style:'mug', a:'#3a0a0a', b:'#e63946'},
-  {k:'mgg', name:'Mug thermosensible Gojo', short:'Mug Gojo', type:'mug', lang:'fr', genres:[], price:2200, vols:[1], style:'mug', a:'#1a1145', b:'#5b6cff'},
-  {k:'stk', name:'Pack de 50 stickers anime', short:'Stickers x50', type:'sticker', lang:'fr', genres:[], price:900, vols:[1], style:'sticker', a:'#c2185b', b:'#ffd23f'},
-  {k:'brd', name:'Bracelet Demon Slayer', short:'Bracelet Demon Slayer', type:'jewelry', lang:'fr', genres:[], price:1400, vols:[1], style:'jewelry', a:'#2a0a12', b:'#c8323c'},
-  {k:'brk', name:'Bague Akatsuki', short:'Bague Akatsuki', type:'jewelry', lang:'fr', genres:[], price:1300, vols:[1], style:'jewelry', a:'#3a0a0a', b:'#e63946'},
-  {k:'cdn', name:'Carnet Death Note', short:'Carnet Death Note', type:'stationery', lang:'fr', genres:[], price:1600, vols:[1], style:'stationery', a:'#0a0a0a', b:'#4b4b4b'},
-  {k:'sop', name:'Set de stylos One Piece', short:'Stylos One Piece', type:'stationery', lang:'fr', genres:[], price:1000, vols:[1], style:'stationery', a:'#0b2a8f', b:'#3b8bff'},
-  {k:'bag', name:'Sac à dos Attack on Titan', short:'Sac AOT', type:'bag', lang:'fr', genres:[], price:5800, vols:[1], style:'bag', a:'#2b1a0a', b:'#d9782a'},
-  {k:'tot', name:'Tote bag Studio Ghibli', short:'Tote bag Ghibli', type:'bag', lang:'fr', genres:[], price:1900, vols:[1], style:'bag', a:'#0e3b2a', b:'#4ade80'},
-  {k:'cqs', name:'Coque téléphone Spider-Man', short:'Coque Spider-Man', type:'phonecase', lang:'fr', genres:[], price:1500, vols:[1], style:'phonecase', a:'#7a0c14', b:'#e63946'},
-  {k:'cqd', name:'Coque téléphone Dragon Ball', short:'Coque Dragon Ball', type:'phonecase', lang:'fr', genres:[], price:1500, vols:[1], style:'phonecase', a:'#a53b00', b:'#ffd23f'}
-];
-/* Catalogue de démonstration : uniquement utilisé par l'admin (réinitialisation).
-   Il n'est JAMAIS affiché aux visiteurs : au premier chargement, on attend les
-   données du serveur (voir BOOTED / viewSkeleton) au lieu de flasher des
-   anciens produits. */
+/* Catalogue : la source de vérité est l'API (/api/products), gérée dans Admin > Produits.
+   Aucun exemple n'est stocké dans le code.
+   Rappel des champs utiles : img ('data:image/…' ou URL) pour une vraie couverture,
+   art ('URL', optionnel) = grand dessin au trait du personnage affiché en fond, en fondu,
+   sur la page produit (PNG/JPG/WebP, noir sur fond blanc ou transparent) ; sans art,
+   la couverture est utilisée en fond. */
+const SEED_SERIES = [];
+
+/* Prochaines sorties : gérées dans Admin > Prochaines sorties (API /api/soon). */
+const SEED_SOON = [];
+
+/* Mise en avant de l'accueil : gérée dans Admin > Paramètres > Bannière d'accueil (API /api/hero). */
+const SEED_HERO = [];
 let SERIES = [];
 let HOMESEC = { promo:true, manga:true, manhwa:true, novel:true, goods:true };
-const SEED_SOON = [
-  {name:'JoJo Lion', a:'#5a2fb5', b:'#26a6d9', style:'manga'},
-  {name:'Look Back', a:'#5a9e3a', b:'#dbe86a', style:'manga'},
-  {name:'Evangelion', a:'#6a5bd0', b:'#c7d8ff', style:'manhwa'},
-  {name:'Sakamoto Days', a:'#0c2a12', b:'#4a8a4a', style:'manga'}
-];
 let SOON = [];
-// Les 7 volumes mis en avant sous le titre d'accueil. Modifiable dans Admin > Paramètres > Bannière d'accueil.
-const SEED_HERO = ['aot-1','ds-13','mha-1','op-1','jjk-1','ber-1','csm-1'];
 let HERO = [];
 
 const DEF = { series:JSON.parse(JSON.stringify(SEED_SERIES)), soon:JSON.parse(JSON.stringify(SEED_SOON)), store:Object.assign({},STORE), ship:Object.assign({},SHIP), hero:SEED_HERO.slice(), homesec:Object.assign({},HOMESEC) };
