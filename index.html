@@ -2370,7 +2370,7 @@ const fmtA=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f')+'\
 const glab=g=>I18N.fr['g_'+g]||g;
 const intl=p=>'213'+String(p).replace(/^0/,'');
 const fdate=d=>{ try{ return new Date(d).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}); }catch(x){ return String(d); } };
-const LOGO='<img src="/logo.png" alt="" width="40" height="40">';
+const LOGO='<img src="/logo-new.png" alt="" width="40" height="40">'; // avatar admin : logo actuel (l'ancien reste sur l'en-tête, le pied de page et le favicon)
 const ICA={
   dash:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>',
   box:'<svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>',
