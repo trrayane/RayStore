@@ -2003,7 +2003,7 @@ function viewHome(){
     +'<div class="hero-in pad"><h1 class="hero-h1"><span class="sr">'+esc(t('h1_sr'))+'</span><span aria-hidden="true">'+(a?esc(a)+' ':'')+'<span class="flip" id="flipw">'+esc(t(FLIP_WORDS[0]))+'</span><br>'+esc(t('h1_b'))+'</span></h1>'
     +'<a class="btn" style="margin-top:clamp(16px,2vw,26px)" href="#/catalogue">'+t('hero_cta')+IC.arrow+'</a></div>'+fan+'</section>';
   const pick=(fn,n=4)=>ITEMS.filter(fn).slice(0,n);
-  const pickGoods=(n=4)=>{ const out=[], seenT={}; ITEMS.filter(i=>isGood(i.s.type)).forEach(i=>{ if(!seenT[i.s.type]&&out.length<n){ seenT[i.s.type]=1; out.push(i); } }); return out; };
+  const pickGoods=(n=4)=>ITEMS.filter(i=>isGood(i.s.type)).slice(0,n);
   const pop=SERIES.filter(s=>s.feat&&s.vols.length).map(s=>byId(s.k+'-'+s.vols[0])).filter(Boolean).slice(0,4);
   const popular=pop.length?pop:ITEMS.slice(0,4);
   const soon=SOON.length?'<section class="sec"><div class="sec-in pad w-lg"><div class="sec-top"><h2 class="sec-h">'+t('sec_soon')+'</h2><a class="lnk" href="#/catalogue?type=manga">'+t('all_manga')+IC.arrow+'</a></div><div class="row four">'
