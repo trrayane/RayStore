@@ -2,6 +2,7 @@ const { getSetting, setSetting } = require('./db');
 
 const YAL_BASE = 'https://api.yalidine.app/v1';
 const ZR_BASE = 'https://api.zrexpress.app/api/v1';
+const AND_BASE = 'https://anderson-ecommerce.ecotrack.dz/api/v1';
 const TIMEOUT = 15000;
 
 function cfg() {
@@ -11,13 +12,16 @@ function cfg() {
     yalFrom: String(process.env.YALIDINE_FROM_WILAYA || 'Alger').trim() || 'Alger',
     weight: Math.max(1, Number(process.env.YALIDINE_WEIGHT) || 1),
     zrKey: String(process.env.ZREXPRESS_API_KEY || process.env.ZR_API_KEY || '').trim(),
-    zrTenant: String(process.env.ZREXPRESS_TENANT_ID || process.env.ZR_TENANT || '').trim()
+    zrTenant: String(process.env.ZREXPRESS_TENANT_ID || process.env.ZR_TENANT || '').trim(),
+    andTok: String(process.env.ANDERSON_API_TOKEN || process.env.ANDERSON_TOKEN || '').trim(),
+    andBase: String(process.env.ANDERSON_BASE_URL || AND_BASE).replace(/\/+$/, ''),
+    andAuto: String(process.env.ANDERSON_AUTO_VALIDATE || '1').trim() !== '0'
   };
 }
 
 function available() {
   const c = cfg();
-  return { yalidine: !!(c.yalId && c.yalTok), zr: !!(c.zrKey && c.zrTenant) };
+  return { yalidine: !!(c.yalId && c.yalTok), zr: !!(c.zrKey && c.zrTenant), anderson: !!c.andTok };
 }
 
 const strip = (s) => String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -346,6 +350,180 @@ async function zrLabel(tracking) {
   return String(url);
 }
 
+/* ---------------- Anderson Delivery (plateforme Ecotrack) ---------------- */
+
+const AND_STATUS = {
+  created: 'Créée', pending: 'En attente', pending_pickup: 'En attente de ramassage',
+  picked_up: 'Ramassé', collected: 'Ramassé', ramasse: 'Ramassé',
+  in_transit: 'En transit', dispatched: 'Expédié', expedie: 'Expédié',
+  out_for_delivery: 'En cours de livraison', en_livraison: 'En cours de livraison',
+  dispatched_to_driver: 'En cours de livraison', livreur_dispatch: 'En cours de livraison',
+  delivered: 'Livré', livred: 'Livré', livre: 'Livré',
+  failed_delivery: 'Tentative échouée', delivery_attempted: 'Tentative échouée',
+  returning: 'Retour en cours', return_in_transit: 'Retour en cours', retour_en_cours: 'Retour en cours',
+  returned: 'Retourné', retour_recu: 'Retourné', retourne: 'Retourné',
+  cancelled: 'Annulé', annule: 'Annulé',
+  ready_for_pickup: 'Au point relais', stop_desk: 'Au point relais',
+  exception: 'Incident', lost: 'Perdu'
+};
+
+function andStatusLabel(raw) {
+  const k = strip(raw).replace(/[\s-]+/g, '_');
+  return AND_STATUS[k] || String(raw || '').trim();
+}
+
+function andHeaders() {
+  return { authorization: 'Bearer ' + cfg().andTok, accept: 'application/json', 'content-type': 'application/json' };
+}
+
+async function andGet(path) {
+  const r = await http('GET', cfg().andBase + path, { headers: andHeaders() });
+  if (!r.ok) throw new Error('Anderson : ' + errMsg(r));
+  return r.data;
+}
+
+async function andPost(path, body) {
+  const r = await http('POST', cfg().andBase + path, { headers: andHeaders(), body: body === undefined ? undefined : JSON.stringify(body) });
+  if (!r.ok) throw new Error('Anderson : ' + errMsg(r));
+  const d = r.data;
+  if (d && typeof d === 'object' && d.success === false) throw new Error('Anderson : ' + (d.message || 'échec de la requête'));
+  return d;
+}
+
+async function andTest() {
+  await andGet('/get/wilayas');
+  return { ok: true, msg: 'Connexion Anderson Delivery réussie' };
+}
+
+let andComm = { at: 0, byWil: {} };
+
+async function andCommunes(wilCode) {
+  const key = String(wilCode);
+  if (andComm.at && Date.now() - andComm.at < 6 * 3600 * 1000 && andComm.byWil[key]) return andComm.byWil[key];
+  const d = await andGet('/get/communes?wilaya_id=' + encodeURIComponent(key));
+  const arr = pickArr(d) || [];
+  if (!andComm.at || Date.now() - andComm.at > 6 * 3600 * 1000) andComm = { at: Date.now(), byWil: {} };
+  andComm.byWil[key] = arr;
+  return arr;
+}
+
+async function andResolveCommune(o) {
+  const arr = await andCommunes(shipWilayaCode(o));
+  const want = strip(o.com);
+  let hit = arr.find((x) => strip(x.nom) === want);
+  if (!hit && want) hit = arr.find((x) => strip(x.nom).includes(want) || want.includes(strip(x.nom)));
+  return hit ? String(hit.nom) : String(o.com || o.wilName || '');
+}
+
+async function andStops(o) {
+  const arr = await andCommunes(shipWilayaCode(o));
+  const seen = {};
+  return arr.filter((x) => Number(x.has_stop_desk) === 1 && Number(x.is_active) !== 0)
+    .map((x) => ({ id: String(x.code_postal || ''), name: String(x.nom || '') }))
+    .filter((x) => { if (!x.id || !x.name || seen[x.id]) return false; seen[x.id] = 1; return true; })
+    .slice(0, 100);
+}
+
+function andPickTracking(d) {
+  const scan = (x) => {
+    if (!x || typeof x !== 'object') return '';
+    const direct = x.tracking || x.tracking_number || x.trackingNumber || x.code_suivi;
+    if (direct) return String(direct);
+    for (const k of ['data', 'order', 'result']) {
+      const v = x[k];
+      if (v && typeof v === 'object') { const t = scan(v); if (t) return t; }
+      if (Array.isArray(v) && v.length) { const t = scan(v[0]); if (t) return t; }
+    }
+    return '';
+  };
+  return scan(d);
+}
+
+async function andCreate(o, opts) {
+  const c = cfg();
+  let commune = await andResolveCommune(o);
+  const payload = {
+    reference: o.ref,
+    nom_client: o.name,
+    telephone: normPhoneLocal(o.phone),
+    adresse: o.addr || o.com || o.wilName,
+    code_wilaya: shipWilayaCode(o),
+    commune: commune,
+    produit: o.summary || 'RayStore',
+    montant: clamp(Math.round(o.total), 0, 150000),
+    type: 1,
+    stop_desk: o.stopdesk ? 1 : 0
+  };
+  if (o.stopdesk && opts && opts.stopdeskId) {
+    payload.code_postal = String(opts.stopdeskId);
+    const arr = await andCommunes(shipWilayaCode(o));
+    const desk = arr.find((x) => String(x.code_postal) === String(opts.stopdeskId));
+    if (desk && desk.nom) payload.commune = String(desk.nom);
+  }
+  const qs = new URLSearchParams();
+  Object.keys(payload).forEach((k) => { const v = payload[k]; if (v !== undefined && v !== null) qs.set(k, String(v)); });
+  const d = await andPost('/create/order?' + qs.toString(), payload);
+  const tracking = andPickTracking(d);
+  if (!tracking) throw new Error('Anderson : numéro de suivi absent de la réponse (' + JSON.stringify(d).slice(0, 200) + ')');
+  let status = 'Prête à expédier';
+  if (c.andAuto) {
+    try {
+      await andPost('/valid/order?tracking=' + encodeURIComponent(tracking));
+      status = 'Expédiée';
+    } catch (e) { /* le colis existe quand même, en attente de validation */ }
+  }
+  return { tracking: tracking, label: '', status: status };
+}
+
+function andActivity(d) {
+  const find = (x, depth) => {
+    if (!x || typeof x !== 'object' || depth > 6) return null;
+    if (Array.isArray(x.activity)) return x.activity;
+    if (Array.isArray(x.activities)) return x.activities;
+    if (Array.isArray(x) && x.length && x[0] && typeof x[0] === 'object' && (x[0].status || x[0].date)) return x;
+    for (const k of Object.keys(x)) {
+      const v = x[k];
+      if (v && typeof v === 'object') { const r = find(v, depth + 1); if (r) return r; }
+    }
+    return null;
+  };
+  return find(d, 0) || [];
+}
+
+async function andTracking(tracking) {
+  const d = await andGet('/get/tracking/info?tracking=' + encodeURIComponent(tracking));
+  if (d && typeof d === 'object' && d.success === false) {
+    throw new Error('Anderson : suivi introuvable pour ' + tracking + (d.message ? ' (' + d.message + ')' : ''));
+  }
+  const arr = andActivity(d);
+  const history = arr.map((x) => {
+    const at = [x.date || x.created_at || x.at || '', x.time || ''].join(' ').trim();
+    return { date: at, status: andStatusLabel(x.status || x.statut || x.state || '') };
+  }).filter((x) => x.status).reverse();
+  const usable = arr.filter((x) => strip(x.status || x.statut || '').replace(/[\s-]+/g, '_') !== 'notification_on_order');
+  const last = usable.length ? usable[usable.length - 1] : null;
+  let status = last ? andStatusLabel(last.status || last.statut || last.state || '') : '';
+  if (!status && history.length) status = history[0].status;
+  if (!status) status = 'En attente';
+  return { status: status, history: history };
+}
+
+async function andLabel(tracking) {
+  const r = await fetch(cfg().andBase + '/get/order/label?tracking=' + encodeURIComponent(tracking), {
+    headers: { authorization: 'Bearer ' + cfg().andTok },
+    signal: AbortSignal.timeout(TIMEOUT)
+  });
+  if (!r.ok) throw new Error('Anderson : étiquette indisponible (HTTP ' + r.status + ')');
+  const ct = String(r.headers.get('content-type') || '');
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (!buf.length) throw new Error('Anderson : étiquette vide');
+  if (/json|text/i.test(ct) && buf.slice(0, 1).toString() === '{') {
+    let d = null; try { d = JSON.parse(buf.toString('utf8')); } catch (e) { d = null; }
+    throw new Error('Anderson : ' + ((d && (d.message || d.error)) || 'étiquette indisponible'));
+  }
+  return 'data:application/pdf;base64,' + buf.toString('base64');
+}
+
 /* ---------------- Façade ---------------- */
 
 async function testCarrier(c) {
@@ -356,6 +534,10 @@ async function testCarrier(c) {
   if (c === 'zr') {
     if (!available().zr) throw new Error('ZR Express non configuré (ZREXPRESS_API_KEY / ZREXPRESS_TENANT_ID manquants)');
     return zrTest();
+  }
+  if (c === 'anderson') {
+    if (!available().anderson) throw new Error('Anderson Delivery non configuré (ANDERSON_API_TOKEN manquant)');
+    return andTest();
   }
   throw new Error('Transporteur inconnu');
 }
@@ -369,12 +551,17 @@ async function createParcel(c, o, opts) {
     if (!available().zr) throw new Error('ZR Express non configuré');
     return zrCreate(o, opts);
   }
+  if (c === 'anderson') {
+    if (!available().anderson) throw new Error('Anderson Delivery non configuré');
+    return andCreate(o, opts);
+  }
   throw new Error('Transporteur inconnu');
 }
 
 async function getTracking(c, tracking) {
   if (c === 'yalidine') return yalTracking(tracking);
   if (c === 'zr') return zrTracking(tracking);
+  if (c === 'anderson') return andTracking(tracking);
   throw new Error('Transporteur inconnu');
 }
 
@@ -384,12 +571,14 @@ async function listStops(c, o) {
     const terr = await zrResolveTerritory(o);
     return zrHubs(terr.cityId, terr.districtId);
   }
+  if (c === 'anderson') return andStops(o);
   throw new Error('Transporteur inconnu');
 }
 
 async function getLabel(c, tracking, stored) {
   if (stored) return String(stored);
   if (c === 'zr') return zrLabel(tracking);
+  if (c === 'anderson') return andLabel(tracking);
   throw new Error('Aucune étiquette disponible');
 }
 

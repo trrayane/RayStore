@@ -2311,8 +2311,8 @@ let CARR=null, CARR_P=null, PX=null, MOV=null, MOV_K='', amO='';
 function ensureCarr(){
   if(CARR) return Promise.resolve(CARR);
   if(!CARR_P) CARR_P=apiReq('/api/orders/carriers',{auth:true,timeout:12000})
-    .then(d=>{ CARR={yalidine:!!(d&&d.yalidine),zr:!!(d&&d.zr)}; return CARR; })
-    .catch(()=>{ CARR={yalidine:false,zr:false}; return CARR; });
+    .then(d=>{ CARR={yalidine:!!(d&&d.yalidine),zr:!!(d&&d.zr),anderson:!!(d&&d.anderson)}; return CARR; })
+    .catch(()=>{ CARR={yalidine:false,zr:false,anderson:false}; return CARR; });
   return CARR_P;
 }
 const STAT={new:'Nouvelle',confirmed:'Confirmée',shipped:'Expédiée',delivered:'Livrée',cancelled:'Annulée',returned:'Retournée'};
@@ -2497,16 +2497,17 @@ function parcelBlock(o){
   if(!o._srvId) return '';
   let inner='';
   if(o.carrier&&o.tracking){
-    const cn=o.carrier==='yalidine'?'Yalidine':'ZR Express';
-    const href=o.carrier==='yalidine'?('https://yalidine.app/suivi/'+encodeURIComponent(o.tracking)):'https://www.zrexpress.net/';
+    const cn=o.carrier==='yalidine'?'Yalidine':(o.carrier==='anderson'?'Anderson Delivery':'ZR Express');
+    const href=o.carrier==='yalidine'?('https://yalidine.app/suivi/'+encodeURIComponent(o.tracking)):(o.carrier==='anderson'?'https://suivi.ecotrack.dz/suivi/':'https://www.zrexpress.net/');
     inner='<dl class="dl" style="margin:0"><dt>Transporteur</dt><dd>'+cn+'</dd><dt>Suivi</dt><dd><b class="mono">'+esc(o.tracking)+'</b> \u2014 <a class="lnk" href="'+esc(href)+'" target="_blank" rel="noopener">ouvrir</a></dd><dt>Statut</dt><dd>'+(o.tracking_status?esc(o.tracking_status):'—')+'</dd></dl>'
      +'<div class="a-acts" style="margin-top:10px"><button class="btn soft sm" type="button" data-a="px-refresh" data-id="'+esc(o._srvId)+'">Actualiser le suivi</button>'
-     +(o.label_url?'<a class="btn soft sm" href="'+esc(o.label_url)+'" target="_blank" rel="noopener">Étiquette</a>':'<button class="btn soft sm" type="button" data-a="px-label" data-id="'+esc(o._srvId)+'">Étiquette</button>')+'</div>';
+     +(o.label_url?(/^data:/i.test(o.label_url)?'<a class="btn soft sm" href="'+esc(o.label_url)+'" download="etiquette-'+esc(o.tracking)+'.pdf">Étiquette</a>':'<a class="btn soft sm" href="'+esc(o.label_url)+'" target="_blank" rel="noopener">Étiquette</a>'):'<button class="btn soft sm" type="button" data-a="px-label" data-id="'+esc(o._srvId)+'">Étiquette</button>')+'</div>';
   } else if(CARR===null){ inner='<p class="a-empty">Chargement…</p>'; }
   else{
     const bs=[];
     if(CARR.yalidine) bs.push('<button class="btn soft sm" type="button" data-a="px-create" data-id="'+esc(o._srvId)+'" data-c="yalidine">Créer le colis Yalidine</button>');
     if(CARR.zr) bs.push('<button class="btn soft sm" type="button" data-a="px-create" data-id="'+esc(o._srvId)+'" data-c="zr">Créer le colis ZR Express</button>');
+    if(CARR.anderson) bs.push('<button class="btn soft sm" type="button" data-a="px-create" data-id="'+esc(o._srvId)+'" data-c="anderson">Créer le colis Anderson Delivery</button>');
     inner=bs.length?'<p class="hint" style="margin:0 0 8px">Colis non créé : le transporteur reçoit adresse, téléphone et montant à encaisser.</p><div class="a-acts">'+bs.join('')+'</div>'
       :'<p class="a-empty">Aucun transporteur configuré — ajoute les clés API dans .env puis redéploie (voir Paramètres \u2192 Transporteurs).</p>';
   }
@@ -2733,7 +2734,7 @@ function admSettings(){
    +'</div>'
    +'<div class="set-duo">'
    +'<div class="ap"><h2>Sauvegarde des données</h2><p class="a-sub" style="margin:0 0 16px">Les données sont enregistrées dans ce navigateur. Exporte-les pour les garder ou les déplacer.</p><div class="a-acts"><button class="btn soft" type="button" data-a="export">Exporter (JSON)</button><label class="btn soft" for="imp">Importer</label><input class="sr" id="imp" type="file" accept="application/json,.json" data-a-import><button class="btn danger" type="button" data-a="reset">Réinitialiser le catalogue</button></div></div>'
-   +'<div class="ap"><h2>Transporteurs (colis)</h2><p class="a-sub" style="margin:0 0 6px">Yalidine et ZR Express : crée les colis et suis-les depuis la fiche d\u2019une commande. Les clés API se mettent dans le fichier .env du serveur, jamais ici.</p>'+carrRows()+'</div>'
+    +'<div class="ap"><h2>Transporteurs (colis)</h2><p class="a-sub" style="margin:0 0 6px">Yalidine, ZR Express et Anderson Delivery : crée les colis et suis-les depuis la fiche d\u2019une commande. Les clés API se mettent dans le fichier .env du serveur, jamais ici.</p>'+carrRows()+'</div>'
    +'</div></div>';
 }
 function carrRows(){
@@ -2742,7 +2743,8 @@ function carrRows(){
     +'<div class="a-acts"><b class="'+(CARR[key]?'mv-up':'mut')+'">'+(CARR[key]?'Configuré':'Non configuré')+'</b>'
     +'<button class="btn soft sm" type="button" data-a="carr-test" data-c="'+key+'"'+(CARR[key]?'':' disabled')+'>Tester la connexion</button></div></div>';
   return row('yalidine','Yalidine','Clés YALIDINE_API_ID et YALIDINE_API_TOKEN dans .env du serveur.')
-    +row('zr','ZR Express','Clés ZREXPRESS_API_KEY et ZREXPRESS_TENANT_ID dans .env du serveur.');
+    +row('zr','ZR Express','Clés ZREXPRESS_API_KEY et ZREXPRESS_TENANT_ID dans .env du serveur.')
+    +row('anderson','Anderson Delivery','Clé ANDERSON_API_TOKEN dans .env du serveur (plateforme Ecotrack).');
 }
 function saveSettings(fm){
   const g=n=>String(fm.elements.namedItem(n).value).trim(), e=$('#stf-e');
@@ -2882,7 +2884,7 @@ document.addEventListener('click',e=>{
     const id=b.dataset.id, o=orders.find(x=>x._srvId===id); if(!o) return;
     b.disabled=true; b.textContent='…';
     apiReq('/api/orders/'+encodeURIComponent(id)+'/label',{method:'POST',auth:true,timeout:30000})
-      .then(d=>{ if(d&&d.url){ o.label_url=d.url; saveOrders(); } ordModal(o); if(o.label_url) window.open(o.label_url,'_blank','noopener'); toast('Étiquette prête'); })
+      .then(d=>{ if(d&&d.url){ o.label_url=d.url; saveOrders(); } ordModal(o); if(o.label_url){ if(/^data:/i.test(o.label_url)){ try{ const bin=atob(o.label_url.split(',')[1]||''); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i); const bu=URL.createObjectURL(new Blob([u],{type:'application/pdf'})); window.open(bu,'_blank','noopener'); setTimeout(()=>URL.revokeObjectURL(bu),60000); }catch(x){ toast('Étiquette téléchargée'); } } else window.open(o.label_url,'_blank','noopener'); } toast('Étiquette prête'); })
       .catch(e=>{ b.disabled=false; b.textContent='Étiquette'; toast((e.body&&e.body.error)||'Étiquette impossible'); });
     return;
   }

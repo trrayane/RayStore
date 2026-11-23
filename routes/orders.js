@@ -55,7 +55,7 @@ router.get('/stats', authRequired, async (req, res) => {
   res.json({ total, new: newc, confirmed: conf, shipped: ship, delivered: deliv, cancelled: canc, returned: ret, revenue: Number(revRow.s)||0, today: Number(todayRow.s)||0 });
 });
 
-/* ---- Transporteurs (Yalidine / ZR Express) ---- */
+/* ---- Transporteurs (Yalidine / ZR Express / Anderson Delivery) ---- */
 function orderForParcel(o) {
   const wil = String(o.wilaya || '');
   const m = wil.match(/^(\d{1,2})\s*-\s*(.+)$/);
@@ -124,12 +124,13 @@ router.post('/:id/label', authRequired, async (req, res) => {
 router.post('/:id/parcel', authRequired, async (req, res) => {
   const body = req.body || {};
   const carrier = String(body.carrier || '');
-  if (carrier !== 'yalidine' && carrier !== 'zr') return res.status(400).json({ error: 'Transporteur invalide' });
+  if (carrier !== 'yalidine' && carrier !== 'zr' && carrier !== 'anderson') return res.status(400).json({ error: 'Transporteur invalide' });
+  const names = { yalidine: 'Yalidine', zr: 'ZR Express', anderson: 'Anderson Delivery' };
   const o = await loadParcelOrder(String(req.params.id || ''));
   if (!o) return res.status(404).json({ error: 'Commande introuvable' });
   if (o.tracking) return res.status(409).json({ error: 'Colis déjà créé', tracking: o.tracking });
-  if (!carriers.available()[carrier === 'yalidine' ? 'yalidine' : 'zr']) {
-    return res.status(400).json({ error: (carrier === 'yalidine' ? 'Yalidine' : 'ZR Express') + ' non configuré — ajoute les clés API dans .env puis redéploie.' });
+  if (!carriers.available()[carrier]) {
+    return res.status(400).json({ error: names[carrier] + ' non configuré — ajoute les clés API dans .env puis redéploie.' });
   }
   const op = orderForParcel(o);
   try {

@@ -6,7 +6,7 @@
 
 <p align="center">
   Boutique e-commerce algérienne spécialisée en mangas, manhwas, novels et goodies —<br>
-  paiement à la livraison, notifications Telegram, colis Yalidine / ZR Express.
+  paiement à la livraison, notifications Telegram, colis Yalidine / ZR Express / Anderson Delivery.
 </p>
 
 ---
@@ -33,7 +33,7 @@ RayStore est une boutique en ligne complète, déployée sur Vercel :
 ### Administration (`#/admin`)
 - **Tableau de bord** : chiffre d'affaires sur 14 jours, top ventes, répartition des statuts, commandes des 7 derniers jours.
 - **Produits** : séries et volumes, import/export, images (téléversement ou lien), stock.
-- **Commandes** : statuts, fiche détaillée, export CSV, bloc **Livraison** (création de colis Yalidine / ZR Express, n° de suivi, étiquette).
+- **Commandes** : statuts, fiche détaillée, export CSV, bloc **Livraison** (création de colis Yalidine / ZR Express / Anderson Delivery, n° de suivi, étiquette).
 - **Mouvements de stock** : journal complet des entrées/sorties (commande, annulation, correction, import) avec stock après coup.
 - **Paramètres** : boutique, bannière d'accueil (avec vignette de couverture dans le sélecteur), mot de passe, transporteurs.
 - **Notifications Telegram** : nouvelle commande (texte + photos), alertes **Épuisé** / **Réassort**.
@@ -51,7 +51,7 @@ RayStore est une boutique en ligne complète, déployée sur Vercel :
 | Base de données | PostgreSQL (Neon) via `pg` |
 | Hébergement | Vercel (serverless) |
 | Notifications | Telegram Bot API |
-| Livraison | Yalidine, ZR Express |
+| Livraison | Yalidine, ZR Express, Anderson Delivery (Ecotrack) |
 | Images | Cloudinary / fichiers statiques |
 
 ## Démarrage rapide
@@ -85,6 +85,9 @@ Le serveur écoute sur `http://localhost:3000` (`GET /api/health` pour vérifier
 | `YALIDINE_FROM_WILAYA` | option | Wilaya de départ (défaut : `Alger`) |
 | `YALIDINE_WEIGHT` | option | Poids par défaut (défaut : `1`) |
 | `ZREXPRESS_API_KEY` / `ZREXPRESS_TENANT_ID` | option | Création de colis ZR Express |
+| `ANDERSON_API_TOKEN` | option | Token API Anderson Delivery (plateforme Ecotrack) |
+| `ANDERSON_BASE_URL` | option | URL du tenant Ecotrack (défaut : `https://anderson-ecommerce.ecotrack.dz/api/v1`) |
+| `ANDERSON_AUTO_VALIDATE` | option | `1` pour remettre le colis au transporteur dès la création (défaut : `1`) |
 | `PORT` | option | Port local (défaut : `3000`) |
 
 > Les transporteurs restent affichés « **Non configuré** » tant que leurs clés ne sont pas présentes : ajoute-les dans `.env`, puis dans Vercel (`vercel env add ...`) et redéploie.
@@ -100,7 +103,7 @@ raystore/
 ├── telegram.js         # Commandes (avec photos) + alertes stock
 ├── stock_alerts.js     # Logique épuisement / réassort
 ├── stock_journal.js    # Journal des mouvements de stock
-├── carriers.js         # Yalidine / ZR Express
+├── carriers.js         # Yalidine / ZR Express / Anderson Delivery
 ├── middleware/auth.js  # Authentification JWT
 ├── routes/             # auth, products, orders, stock, soon, hero, settings, upload, export
 ├── p/                  # Images produits
