@@ -131,7 +131,7 @@ raystore/
 | GET / POST / PUT / DELETE | `/api/products…` | Gestion du catalogue (`/all`, `/replace`, `/:k`) |
 | GET / PATCH / DELETE | `/api/orders…` | Liste, stats, statut, suppression |
 | GET / POST | `/api/orders/carriers`, `/carriers/test` | État et test des transporteurs |
-| POST / GET | `/api/orders/:id/parcel`, `/:id/tracking`, `/:id/label` | Colis, suivi, étiquette |
+| POST / GET | `/api/orders/:id/parcel`, `/:id/tracking`, `/:id/label`, `/:id/cancel-parcel` | Colis, suivi, étiquette, annulation (Anderson) |
 | GET | `/api/stock/movements` | Journal des mouvements de stock |
 | POST / GET / DELETE | `/api/upload…` | Images |
 | PUT | `/api/soon`, `/api/hero`, `/api/settings` | Contenu et paramètres |

@@ -2501,7 +2501,8 @@ function parcelBlock(o){
     const href=o.carrier==='yalidine'?('https://yalidine.app/suivi/'+encodeURIComponent(o.tracking)):(o.carrier==='anderson'?'https://suivi.ecotrack.dz/suivi/':'https://www.zrexpress.net/');
     inner='<dl class="dl" style="margin:0"><dt>Transporteur</dt><dd>'+cn+'</dd><dt>Suivi</dt><dd><b class="mono">'+esc(o.tracking)+'</b> \u2014 <a class="lnk" href="'+esc(href)+'" target="_blank" rel="noopener">ouvrir</a></dd><dt>Statut</dt><dd>'+(o.tracking_status?esc(o.tracking_status):'—')+'</dd></dl>'
      +'<div class="a-acts" style="margin-top:10px"><button class="btn soft sm" type="button" data-a="px-refresh" data-id="'+esc(o._srvId)+'">Actualiser le suivi</button>'
-     +(o.label_url?(/^data:/i.test(o.label_url)?'<a class="btn soft sm" href="'+esc(o.label_url)+'" download="etiquette-'+esc(o.tracking)+'.pdf">Étiquette</a>':'<a class="btn soft sm" href="'+esc(o.label_url)+'" target="_blank" rel="noopener">Étiquette</a>'):'<button class="btn soft sm" type="button" data-a="px-label" data-id="'+esc(o._srvId)+'">Étiquette</button>')+'</div>';
+     +(o.label_url?(/^data:/i.test(o.label_url)?'<a class="btn soft sm" href="'+esc(o.label_url)+'" download="etiquette-'+esc(o.tracking)+'.pdf">Étiquette</a>':'<a class="btn soft sm" href="'+esc(o.label_url)+'" target="_blank" rel="noopener">Étiquette</a>'):'<button class="btn soft sm" type="button" data-a="px-label" data-id="'+esc(o._srvId)+'">Étiquette</button>')
+     +'<button class="btn danger sm" type="button" data-a="px-cancel" data-id="'+esc(o._srvId)+'"'+(o.carrier==='anderson'?'':' hidden')+'>Annuler le colis</button></div>';
   } else if(CARR===null){ inner='<p class="a-empty">Chargement…</p>'; }
   else{
     const bs=[];
@@ -2886,6 +2887,17 @@ document.addEventListener('click',e=>{
     apiReq('/api/orders/'+encodeURIComponent(id)+'/label',{method:'POST',auth:true,timeout:30000})
       .then(d=>{ if(d&&d.url){ o.label_url=d.url; saveOrders(); } ordModal(o); if(o.label_url){ if(/^data:/i.test(o.label_url)){ try{ const bin=atob(o.label_url.split(',')[1]||''); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i); const bu=URL.createObjectURL(new Blob([u],{type:'application/pdf'})); window.open(bu,'_blank','noopener'); setTimeout(()=>URL.revokeObjectURL(bu),60000); }catch(x){ toast('Étiquette téléchargée'); } } else window.open(o.label_url,'_blank','noopener'); } toast('Étiquette prête'); })
       .catch(e=>{ b.disabled=false; b.textContent='Étiquette'; toast((e.body&&e.body.error)||'Étiquette impossible'); });
+    return;
+  }
+  if(a==='px-cancel'){
+    const id=b.dataset.id, o=orders.find(x=>x._srvId===id); if(!o||!o.tracking) return;
+    const cn=o.carrier==='anderson'?'Anderson Delivery':(o.carrier==='yalidine'?'Yalidine':'ZR Express');
+    amConfirm('Annuler le colis ?','Le colis '+o.tracking+' sera supprimé chez '+cn+'. Si le transporteur l\u2019a déjà validé, l\u2019annulation sera refusée.','Annuler le colis',()=>{
+      b.disabled=true; b.textContent='Annulation…';
+      apiReq('/api/orders/'+encodeURIComponent(id)+'/cancel-parcel',{method:'POST',auth:true,timeout:30000})
+        .then(()=>{ Object.assign(o,{carrier:'',tracking:'',tracking_status:'',label_url:''}); saveOrders(); ordModal(o); toast('Colis annulé'); })
+        .catch(e=>{ b.disabled=false; b.textContent='Annuler le colis'; toast((e.body&&e.body.error)||'Annulation impossible'); });
+    });
     return;
   }
   if(a==='carr-test'){

@@ -146,6 +146,19 @@ router.post('/:id/parcel', authRequired, async (req, res) => {
   }
 });
 
+router.post('/:id/cancel-parcel', authRequired, async (req, res) => {
+  const o = await loadParcelOrder(String(req.params.id || ''));
+  if (!o) return res.status(404).json({ error: 'Commande introuvable' });
+  if (!o.carrier || !o.tracking) return res.status(404).json({ error: 'Aucun colis créé pour cette commande' });
+  try {
+    await carriers.cancelParcel(o.carrier, o.tracking);
+    await query("UPDATE orders SET carrier='', tracking='', tracking_status='', label_url='' WHERE id=$1", [o.id]);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
 async function createAndSave(res, carrier, op, opts, orderId) {
   try {
     const p = await carriers.createParcel(carrier, op, opts);

@@ -508,6 +508,18 @@ async function andTracking(tracking) {
   return { status: status, history: history };
 }
 
+async function andCancel(tracking) {
+  const r = await http('DELETE', cfg().andBase + '/delete/order?tracking=' + encodeURIComponent(tracking), { headers: andHeaders() });
+  if (r.status === 500) throw new Error('Anderson : annulation refusée — le colis est déjà validé ou en cours de traitement. Annule-le depuis le tableau de bord Anderson.');
+  if (!r.ok) throw new Error('Anderson : ' + errMsg(r));
+  const d = r.data;
+  if (d && typeof d === 'object') {
+    if (d.success === false) throw new Error('Anderson : ' + (d.message || 'annulation refusée'));
+    if (d.delete === 'fail') throw new Error('Anderson : annulation refusée (colis déjà validé)');
+  }
+  return { ok: true };
+}
+
 async function andLabel(tracking) {
   const r = await fetch(cfg().andBase + '/get/order/label?tracking=' + encodeURIComponent(tracking), {
     headers: { authorization: 'Bearer ' + cfg().andTok },
@@ -582,4 +594,12 @@ async function getLabel(c, tracking, stored) {
   throw new Error('Aucune étiquette disponible');
 }
 
-module.exports = { available, testCarrier, createParcel, getTracking, listStops, getLabel, normPhoneLocal, normPhoneZr };
+async function cancelParcel(c, tracking) {
+  if (c === 'anderson') {
+    if (!available().anderson) throw new Error('Anderson Delivery non configuré');
+    return andCancel(tracking);
+  }
+  throw new Error('Annulation non disponible pour ce transporteur');
+}
+
+module.exports = { available, testCarrier, createParcel, getTracking, listStops, getLabel, cancelParcel, normPhoneLocal, normPhoneZr };
