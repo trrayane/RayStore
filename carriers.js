@@ -15,7 +15,7 @@ function cfg() {
     zrTenant: String(process.env.ZREXPRESS_TENANT_ID || process.env.ZR_TENANT || '').trim(),
     andTok: String(process.env.ANDERSON_API_TOKEN || process.env.ANDERSON_TOKEN || '').trim(),
     andBase: String(process.env.ANDERSON_BASE_URL || AND_BASE).replace(/\/+$/, ''),
-    andAuto: String(process.env.ANDERSON_AUTO_VALIDATE || '1').trim() !== '0'
+    andAuto: String(process.env.ANDERSON_AUTO_VALIDATE || '0').trim() === '1'
   };
 }
 

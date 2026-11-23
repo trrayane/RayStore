@@ -87,7 +87,7 @@ Le serveur écoute sur `http://localhost:3000` (`GET /api/health` pour vérifier
 | `ZREXPRESS_API_KEY` / `ZREXPRESS_TENANT_ID` | option | Création de colis ZR Express |
 | `ANDERSON_API_TOKEN` | option | Token API Anderson Delivery (plateforme Ecotrack) |
 | `ANDERSON_BASE_URL` | option | URL du tenant Ecotrack (défaut : `https://anderson-ecommerce.ecotrack.dz/api/v1`) |
-| `ANDERSON_AUTO_VALIDATE` | option | `1` pour remettre le colis au transporteur dès la création (défaut : `1`) |
+| `ANDERSON_AUTO_VALIDATE` | option | `1` pour remettre le colis au transporteur dès la création ; `0` (défaut) le laisse « prête à expédier » et annulable |
 | `PORT` | option | Port local (défaut : `3000`) |
 
 > Les transporteurs restent affichés « **Non configuré** » tant que leurs clés ne sont pas présentes : ajoute-les dans `.env`, puis dans Vercel (`vercel env add ...`) et redéploie.
